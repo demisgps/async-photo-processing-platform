@@ -13,9 +13,13 @@ O build sempre usa `backend/mvnw`; Maven global não é requisito.
 
 ## 1. Build and automated gates
 
+A partir da raiz do repositório, entre em `backend/`. O Maven Wrapper deve ser executado dentro
+desse diretório:
+
 ```bash
 cd backend
 ./mvnw verify
+cd ..
 ```
 
 Esperado:
@@ -26,6 +30,8 @@ Esperado:
 - testes de contrato de imagem, eventos, idempotência e resiliência aprovados.
 
 ## 2. Start local dependencies and backend
+
+De volta à raiz do repositório, onde está `compose.yaml`, execute:
 
 ```bash
 docker compose up --build
@@ -38,8 +44,10 @@ O bootstrap deve criar:
 - tópico `foto-processada`, subscription `photo-consumer-sub`;
 - tópico `foto-processada-dlq`, subscription `photo-consumer-dlq-sub`.
 
-Verifique health/readiness dos serviços e que o dispatcher local consegue entregar ao Functions
-Framework um CloudEvent de teste com o contrato de [events.md](contracts/events.md).
+Verifique separadamente os endpoints de health/readiness de `photo-api` e `photo-consumer`. Para o
+`photo-processor`, verifique apenas que o Functions Framework está disponível e consegue receber um
+CloudEvent de teste entregue pelo dispatcher local conforme [events.md](contracts/events.md); essa
+disponibilidade não equivale aos checks de health/readiness dos serviços Spring Boot.
 
 ## 3. Configure Postman
 
@@ -65,7 +73,7 @@ Nenhum segredo real deve existir no environment.
 1. Cadastrar com nome e JPG/PNG válido; esperar 201 e capturar IDs.
 2. Consultar processamento; esperar 200 e estado observável.
 3. Consultar até `PERSISTIDA`, com limite de polling para não criar loop infinito.
-4. Consultar foto; esperar 200, `image/jpeg` ou `image/png`, dimensões <=1024 e orientação correta.
+4. Consultar foto; esperar HTTP 200, `Content-Type` `image/jpeg` ou `image/png` e corpo não vazio.
 5. Listar/consultar usuário; esperar 200.
 6. Atualizar nome; esperar 200, novo nome e mesmo `usuarioId`.
 7. Enviar nova foto; esperar 202 e novo `processamentoId`.
@@ -107,7 +115,11 @@ Nenhum segredo real deve existir no environment.
   emitido; após retorno do banco, estado é registrado.
 - Criar `PROCESSANDO` estagnado sem objeto processado: duas varreduras após 15 minutos confirmam e
   registram `ERRO_PROCESSAMENTO`. Com objeto processado presente, mantém ativo e sinaliza
-  republicação pendente.
+  uma ocorrência operacional/log de recuperação de republicação pendente; isso não cria novo
+  status de `PROCESSAMENTO_FOTO`, que permanece `PROCESSANDO`.
+
+Dimensões <=1024, correção de orientação EXIF, ausência de upscale e preservação do comportamento
+de PNG são validadas nos testes automatizados do `photo-processor`, não no Happy Path do Postman.
 
 ## 7. Deletion recovery
 
