@@ -22,15 +22,15 @@
 
 **Purpose**: estabelecer o build Backend First e os três módulos, sem código funcional ou frontend.
 
-- [ ] T001 Criar o agregador Maven Java 25 com os módulos `photo-api`, `photo-consumer` e `photo-processor` em `backend/pom.xml`
-- [ ] T002 Configurar Maven Wrapper 3.9.12 em `backend/mvnw`, `backend/mvnw.cmd` e `backend/.mvn/wrapper/maven-wrapper.properties`
-- [ ] T003 [P] Criar o módulo Spring Boot 4.0.0 `photo-api` e sua estrutura inicial de testes em `backend/photo-api/pom.xml` e `backend/photo-api/src/test/java/`
-- [ ] T004 [P] Criar o módulo Spring Boot 4.0.0 `photo-consumer` e sua estrutura inicial de testes em `backend/photo-consumer/pom.xml` e `backend/photo-consumer/src/test/java/`
-- [ ] T005 [P] Criar o módulo Java 25 Functions Framework, sem Spring Boot e sem Actuator, em `backend/photo-processor/pom.xml` e `backend/photo-processor/src/test/java/`
-- [ ] T006 Configurar compiler, Surefire, Failsafe e JaCoCo com mínimo de 80% de linhas por módulo e agregado em `backend/pom.xml`
-- [ ] T007 [P] Adicionar Actuator ao `photo-api` e expor somente health, liveness e readiness em `backend/photo-api/pom.xml` e `backend/photo-api/src/main/resources/application.yml`
-- [ ] T008 [P] Adicionar Actuator ao `photo-consumer` e expor somente health, liveness e readiness em `backend/photo-consumer/pom.xml` e `backend/photo-consumer/src/main/resources/application.yml`
-- [ ] T009 Executar `./mvnw verify` em `backend/` e confirmar módulos, Java 25, testes vazios e quality gates sem criar frontend
+- [X] T001 Criar o agregador Maven Java 25 com os módulos `photo-api`, `photo-consumer` e `photo-processor` em `backend/pom.xml`
+- [X] T002 Configurar Maven Wrapper 3.9.12 em `backend/mvnw`, `backend/mvnw.cmd` e `backend/.mvn/wrapper/maven-wrapper.properties`
+- [X] T003 [P] Criar o módulo Spring Boot 4.0.0 `photo-api` e sua estrutura inicial de testes em `backend/photo-api/pom.xml` e `backend/photo-api/src/test/java/`
+- [X] T004 [P] Criar o módulo Spring Boot 4.0.0 `photo-consumer` e sua estrutura inicial de testes em `backend/photo-consumer/pom.xml` e `backend/photo-consumer/src/test/java/`
+- [X] T005 [P] Criar o módulo Java 25 Functions Framework, sem Spring Boot e sem Actuator, em `backend/photo-processor/pom.xml` e `backend/photo-processor/src/test/java/`
+- [X] T006 Configurar compiler, Surefire, Failsafe e JaCoCo com mínimo de 80% de linhas por módulo e agregado em `backend/pom.xml`
+- [X] T007 [P] Adicionar Actuator ao `photo-api` e expor somente health, liveness e readiness em `backend/photo-api/pom.xml` e `backend/photo-api/src/main/resources/application.yml`
+- [X] T008 [P] Adicionar Actuator ao `photo-consumer` e expor somente health, liveness e readiness em `backend/photo-consumer/pom.xml` e `backend/photo-consumer/src/main/resources/application.yml`
+- [X] T009 Executar `./mvnw verify` em `backend/` e confirmar módulos, Java 25, testes vazios e quality gates sem criar frontend
 
 **Checkpoint**: build multimódulo reproduzível; Actuator existe somente nos dois serviços Spring Boot.
 
@@ -44,39 +44,39 @@
 
 ### Infraestrutura local
 
-- [ ] T010 [P] Definir MySQL 8.4 LTS, fake-gcs-server, Pub/Sub Emulator e redes/volumes locais em `compose.yaml`
-- [ ] T011 [P] Criar bootstrap idempotente dos buckets `fotos-usuarios-original` e `fotos-usuarios-processadas` em `docker/fake-gcs-server/bootstrap.sh`
-- [ ] T012 [P] Criar bootstrap idempotente de `foto-processada`, `photo-consumer-sub`, `foto-processada-dlq` e `photo-consumer-dlq-sub`, configurando na subscription macro-redelivery de 10–300s, máximo de 8 entregas best-effort, DLT e retenção de 7 dias em `docker/pubsub/bootstrap.sh`
-- [ ] T013 [P] Criar o Dockerfile local do `photo-api` em `backend/photo-api/Dockerfile`
-- [ ] T014 [P] Criar o Dockerfile local do `photo-consumer` em `backend/photo-consumer/Dockerfile`
-- [ ] T015 [P] Criar o Dockerfile local do Functions Framework do `photo-processor` em `backend/photo-processor/Dockerfile`
-- [ ] T016 [P] Criar o Dockerfile local do `storage-event-dispatcher` em `docker/storage-event-dispatcher/Dockerfile`
-- [ ] T017 Implementar no `storage-event-dispatcher` a detecção assíncrona de finalização no fake-gcs-server, construção do CloudEvent aprovado, dedupe técnico por `bucket + object/name + generation`, watermark previsto no plano e entrega não bloqueante ao Functions Framework, sem regra de negócio, em `docker/storage-event-dispatcher/`
-- [ ] T018 Integrar no `compose.yaml` as imagens locais da API, consumer, processor e dispatcher, deixando o wiring dispatcher → Functions Framework configurado sem exigir validação funcional antes da `PhotoProcessorFunction`
-- [ ] T019 Criar verificação local de bootstrap repetível de buckets, tópico, subscriptions e DLT em `docker/tests/bootstrap-local.sh`, classificada fora do Maven e executada somente com o ambiente Compose já iniciado
+- [X] T010 [P] Definir MySQL 8.4 LTS, fake-gcs-server, Pub/Sub Emulator e redes/volumes locais em `compose.yaml`
+- [X] T011 [P] Criar bootstrap idempotente dos buckets `fotos-usuarios-original` e `fotos-usuarios-processadas` em `docker/fake-gcs-server/bootstrap.sh`
+- [X] T012 [P] Criar bootstrap idempotente de `foto-processada`, `photo-consumer-sub`, `foto-processada-dlq` e `photo-consumer-dlq-sub`, configurando na subscription macro-redelivery de 10–300s, máximo de 8 entregas best-effort, DLT e retenção de 7 dias em `docker/pubsub/bootstrap.sh`
+- [X] T013 [P] Criar o Dockerfile local do `photo-api` em `backend/photo-api/Dockerfile`
+- [X] T014 [P] Criar o Dockerfile local do `photo-consumer` em `backend/photo-consumer/Dockerfile`
+- [X] T015 [P] Criar o Dockerfile local do Functions Framework do `photo-processor` em `backend/photo-processor/Dockerfile`
+- [X] T016 [P] Criar o Dockerfile local do `storage-event-dispatcher` em `docker/storage-event-dispatcher/Dockerfile`
+- [X] T017 Implementar no `storage-event-dispatcher` a detecção assíncrona de finalização no fake-gcs-server, construção do CloudEvent aprovado, dedupe técnico por `bucket + object/name + generation`, watermark previsto no plano e entrega não bloqueante ao Functions Framework, sem regra de negócio, em `docker/storage-event-dispatcher/`
+- [X] T018 Integrar no `compose.yaml` as imagens locais da API, consumer, processor e dispatcher, deixando o wiring dispatcher → Functions Framework configurado sem exigir validação funcional antes da `PhotoProcessorFunction`
+- [X] T019 Criar verificação local de bootstrap repetível de buckets, tópico, subscriptions e DLT em `docker/tests/bootstrap-local.sh`, classificada fora do Maven e executada somente com o ambiente Compose já iniciado
 
 ### Modelo relacional e acesso a dados
 
-- [ ] T020 [P] Configurar datasource MySQL e Flyway no `photo-api` em `backend/photo-api/src/main/resources/application.yml`
-- [ ] T021 [P] Configurar datasource MySQL do `photo-consumer` para o schema versionado pelas migrations Flyway da feature em `backend/photo-consumer/src/main/resources/application.yml`
-- [ ] T022 Criar `USUARIO` com ID gerado pelo banco, nome, foto atual, `proxima_sequencia_upload`, versionamento otimista e datas em `backend/photo-api/src/main/resources/db/migration/V1__create_usuario_and_processamento_foto.sql`
-- [ ] T023 Completar a mesma migration com `PROCESSAMENTO_FOTO`, UUID, FKs de existência, sequência, referências/metadados, BLOB, erro, versão, índices e exatamente os sete estados aprovados em `backend/photo-api/src/main/resources/db/migration/V1__create_usuario_and_processamento_foto.sql`
-- [ ] T024 Criar unicidade `(usuario_id, sequencia_upload)` e proteção de processamento ativo por `usuario_ativo_id` em `backend/photo-api/src/main/resources/db/migration/V2__add_active_processing_guard.sql`
-- [ ] T025 [P] Criar entidades JPA não-Record e enum com somente `RECEBIDA`, `PROCESSANDO`, `PROCESSADA`, `PERSISTINDO`, `PERSISTIDA`, `ERRO_PROCESSAMENTO` e `ERRO_PERSISTENCIA` em `backend/photo-api/src/main/java/com/example/photoapi/processamento/domain/`
-- [ ] T026 [P] Criar o mapeamento JPA equivalente do consumidor em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/domain/`
-- [ ] T027 [P] Criar repositories de usuário/processamento, incluindo consultas com lock e updates CAS, em `backend/photo-api/src/main/java/com/example/photoapi/usuario/repository/` e `backend/photo-api/src/main/java/com/example/photoapi/processamento/repository/`
-- [ ] T028 [P] Criar repository do processamento para consumo, retomada e promoção condicional em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/repository/`
-- [ ] T029 Criar testes Testcontainers MySQL 8.4 para migrations, PKs, FKs, CHECKs, índices e enum de estados em `backend/photo-api/src/test/java/com/example/photoapi/persistence/MigrationIT.java`
-- [ ] T030 Criar testes Testcontainers para processamento ativo único, corrida de alocação de `sequencia_upload` e versionamento/CAS em `backend/photo-api/src/test/java/com/example/photoapi/persistence/ProcessingConstraintIT.java`
+- [X] T020 [P] Configurar datasource MySQL e Flyway no `photo-api` em `backend/photo-api/src/main/resources/application.yml`
+- [X] T021 [P] Configurar datasource MySQL do `photo-consumer` para o schema versionado pelas migrations Flyway da feature em `backend/photo-consumer/src/main/resources/application.yml`
+- [X] T022 Criar `USUARIO` com ID gerado pelo banco, nome, foto atual, `proxima_sequencia_upload`, versionamento otimista e datas em `backend/photo-api/src/main/resources/db/migration/V1__create_usuario_and_processamento_foto.sql`
+- [X] T023 Completar a mesma migration com `PROCESSAMENTO_FOTO`, UUID, FKs de existência, sequência, referências/metadados, BLOB, erro, versão, índices e exatamente os sete estados aprovados em `backend/photo-api/src/main/resources/db/migration/V1__create_usuario_and_processamento_foto.sql`
+- [X] T024 Criar unicidade `(usuario_id, sequencia_upload)` e proteção de processamento ativo por `usuario_ativo_id` em `backend/photo-api/src/main/resources/db/migration/V2__add_active_processing_guard.sql`
+- [X] T025 [P] Criar entidades JPA não-Record e enum com somente `RECEBIDA`, `PROCESSANDO`, `PROCESSADA`, `PERSISTINDO`, `PERSISTIDA`, `ERRO_PROCESSAMENTO` e `ERRO_PERSISTENCIA` em `backend/photo-api/src/main/java/com/example/photoapi/processamento/domain/`
+- [X] T026 [P] Criar o mapeamento JPA equivalente do consumidor em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/domain/`
+- [X] T027 [P] Criar repositories de usuário/processamento, incluindo consultas com lock e updates CAS, em `backend/photo-api/src/main/java/com/example/photoapi/usuario/repository/` e `backend/photo-api/src/main/java/com/example/photoapi/processamento/repository/`
+- [X] T028 [P] Criar repository do processamento para consumo, retomada e promoção condicional em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/repository/`
+- [X] T029 Criar testes Testcontainers MySQL 8.4 para migrations, PKs, FKs, CHECKs, índices e enum de estados em `backend/photo-api/src/test/java/com/example/photoapi/persistence/MigrationIT.java`
+- [X] T030 Criar testes Testcontainers para processamento ativo único, corrida de alocação de `sequencia_upload` e versionamento/CAS em `backend/photo-api/src/test/java/com/example/photoapi/persistence/ProcessingConstraintIT.java`
 
 ### Contratos e configuração comuns
 
-- [ ] T031 [P] Criar Records de requests, responses e erros aderentes a `contracts/openapi.yaml` em `backend/photo-api/src/main/java/com/example/photoapi/usuario/web/contract/`
-- [ ] T032 [P] Criar Records de `PhotoProcessingResult` e `PhotoProcessingError` aderentes a `contracts/events.md` no processor em `backend/photo-processor/src/main/java/com/example/photoprocessor/event/`
-- [ ] T033 [P] Criar Records equivalentes e validação de `schemaVersion` no consumer em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/event/`
-- [ ] T034 [P] Configurar propriedades tipadas de buckets, Pub/Sub e limites operacionais no `photo-api` em `backend/photo-api/src/main/java/com/example/photoapi/config/`
-- [ ] T035 [P] Configurar propriedades tipadas equivalentes no consumer em `backend/photo-consumer/src/main/java/com/example/photoconsumer/config/`
-- [ ] T036 [P] Configurar propriedades tipadas equivalentes no processor em `backend/photo-processor/src/main/java/com/example/photoprocessor/config/`
+- [X] T031 [P] Criar Records de requests, responses e erros aderentes a `contracts/openapi.yaml` em `backend/photo-api/src/main/java/com/example/photoapi/usuario/web/contract/`
+- [X] T032 [P] Criar Records de `PhotoProcessingResult` e `PhotoProcessingError` aderentes a `contracts/events.md` no processor em `backend/photo-processor/src/main/java/com/example/photoprocessor/event/`
+- [X] T033 [P] Criar Records equivalentes e validação de `schemaVersion` no consumer em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/event/`
+- [X] T034 [P] Configurar propriedades tipadas de buckets, Pub/Sub e limites operacionais no `photo-api` em `backend/photo-api/src/main/java/com/example/photoapi/config/`
+- [X] T035 [P] Configurar propriedades tipadas equivalentes no consumer em `backend/photo-consumer/src/main/java/com/example/photoconsumer/config/`
+- [X] T036 [P] Configurar propriedades tipadas equivalentes no processor em `backend/photo-processor/src/main/java/com/example/photoprocessor/config/`
 
 **Checkpoint**: containers, configuração e wiring local estão preparados; schema é validado em MySQL 8.4 e contratos-base compilam. A entrega funcional dispatcher → `PhotoProcessorFunction` permanece deliberadamente adiada até a US2.
 
@@ -122,8 +122,8 @@
 
 - [ ] T051 [P] [US2] Criar testes de contrato do CloudEvent para bucket, name, generation, `usuarioId` e `processamentoId` em `backend/photo-processor/src/test/java/com/example/photoprocessor/processamento/StorageCloudEventTest.java`
 - [ ] T052 [P] [US2] Criar fixtures e testes de orientação EXIF, limite 1024x1024, proporção, ausência de upscale, JPEG e PNG com alpha em `backend/photo-processor/src/test/java/com/example/photoprocessor/imagem/ImageTransformerTest.java`
-- [ ] T053 [P] [US2] Criar testes do limite configurável de pixels de entrada com imagem dentro do limite, imagem acima do limite e falha segura sem consumo descontrolado de memória em `backend/photo-processor/src/test/java/com/example/photoprocessor/imagem/InputPixelLimitTest.java`
-- [ ] T054 [US2] Implementar e configurar a validação do limite de pixels de entrada antes da decodificação integral, usando a propriedade configurável prevista no plano sem alterar o limite HTTP de 10 MiB, em `backend/photo-processor/src/main/java/com/example/photoprocessor/imagem/InputPixelGuard.java` e `backend/photo-processor/src/main/java/com/example/photoprocessor/config/ProcessorProperties.java`
+- [ ] T053 [P] [US2] Criar testes de `photo.processing.max-pixels` cobrindo imagem abaixo do limite, exatamente no limite (aceita), acima do limite (erro funcional definitivo), cálculo de `largura × altura` seguro contra overflow e falha sem consumo descontrolado de memória em `backend/photo-processor/src/test/java/com/example/photoprocessor/imagem/InputPixelLimitTest.java`
+- [ ] T054 [US2] Implementar `photo.processing.max-pixels` com padrão `25_000_000` no `photo-processor` e validar `largura × altura` com cálculo seguro contra overflow antes da decodificação completa e transformação sempre que as dimensões puderem ser obtidas previamente; aceitar valor igual ao limite e encaminhar valor superior como erro funcional definitivo pelo fluxo `PhotoProcessingError` / `ERRO_PROCESSAMENTO`, sem alterar o limite HTTP de 10 MiB, em `backend/photo-processor/src/main/java/com/example/photoprocessor/imagem/InputPixelGuard.java` e `backend/photo-processor/src/main/java/com/example/photoprocessor/config/ProcessorProperties.java`
 - [ ] T055 [P] [US2] Integrar Thumbnailator 0.4.21 e TwelveMonkeys ImageIO JPEG em `backend/photo-processor/pom.xml`
 - [ ] T056 [US2] Implementar transformação de imagem com as invariantes aprovadas em `backend/photo-processor/src/main/java/com/example/photoprocessor/imagem/ImageTransformer.java`
 - [ ] T057 [P] [US2] Implementar acesso aos buckets original/processado com chave `{usuarioId}/{processamentoId}/arquivo.<ext>` normalizada pelo formato validado, HEAD e create-only por generation match em `backend/photo-processor/src/main/java/com/example/photoprocessor/storage/PhotoStorage.java`

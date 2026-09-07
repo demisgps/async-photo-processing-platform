@@ -1,0 +1,146 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: photo_platform
+      MYSQL_USER: photo
+      MYSQL_PASSWORD: photo-local
+      MYSQL_ROOT_PASSWORD: root-local
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot-local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [photo-platform]
+
+  fake-gcs-server:
+    image: fsouza/fake-gcs-server:1.52.3
+    command: ["-scheme", "http", "-port", "4443", "-external-url", "http://fake-gcs-server:4443"]
+    ports:
+      - "4443:4443"
+    volumes:
+      - fake-gcs-data:/storage
+    networks: [photo-platform]
+
+  fake-gcs-bootstrap:
+    image: curlimages/curl:8.12.1
+    depends_on: [fake-gcs-server]
+    environment:
+      STORAGE_ENDPOINT: http://fake-gcs-server:4443
+    volumes:
+      - ./docker/fake-gcs-server/bootstrap.sh:/bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/bootstrap.sh"]
+    restart: "no"
+    networks: [photo-platform]
+
+  pubsub-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: ["gcloud", "beta", "emulators", "pubsub", "start", "--host-port=0.0.0.0:8085", "--project=local-photo-platform"]
+    ports:
+      - "8085:8085"
+    networks: [photo-platform]
+
+  pubsub-bootstrap:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    depends_on: [pubsub-emulator]
+    environment:
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: local-photo-platform
+    volumes:
+      - ./docker/pubsub/bootstrap.sh:/bootstrap.sh:ro
+    entrypoint: ["/bin/bash", "/bootstrap.sh"]
+    restart: "no"
+    networks: [photo-platform]
+
+  photo-api:
+    build:
+      context: ./backend
+      dockerfile: photo-api/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      fake-gcs-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/photo_platform
+      DB_USER: photo
+      DB_PASSWORD: photo-local
+      STORAGE_ENDPOINT: http://fake-gcs-server:4443
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [photo-platform]
+
+  photo-consumer:
+    build:
+      context: ./backend
+      dockerfile: photo-consumer/Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      pubsub-bootstrap:
+        condition: service_completed_successfully
+      photo-api:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/photo_platform
+      DB_USER: photo
+      DB_PASSWORD: photo-local
+      STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: local-photo-platform
+    ports:
+      - "8081:8081"
+    networks: [photo-platform]
+
+  photo-processor:
+    build:
+      context: ./backend
+      dockerfile: photo-processor/Dockerfile
+    depends_on:
+      fake-gcs-bootstrap:
+        condition: service_completed_successfully
+      pubsub-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
+      PUBSUB_PROJECT_ID: local-photo-platform
+      FUNCTION_TARGET: com.example.photoprocessor.processamento.PhotoProcessorFunction
+    ports:
+      - "8082:8080"
+    networks: [photo-platform]
+
+  storage-event-dispatcher:
+    build: ./docker/storage-event-dispatcher
+    depends_on:
+      fake-gcs-bootstrap:
+        condition: service_completed_successfully
+      photo-processor:
+        condition: service_started
+    environment:
+      STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      ORIGINAL_BUCKET: fotos-usuarios-original
+      FUNCTIONS_ENDPOINT: http://photo-processor:8080
+      POLL_INTERVAL_SECONDS: "2"
+      DELIVERY_TIMEOUT_SECONDS: "5"
+      STATE_DIR: /state
+    volumes:
+      - dispatcher-state:/state
+    networks: [photo-platform]
+
+networks:
+  photo-platform:
+
+volumes:
+  mysql-data:
+  fake-gcs-data:
+  dispatcher-state:

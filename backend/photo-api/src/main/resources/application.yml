@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: photo-api
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/photo_platform}
+    username: ${DB_USER:photo}
+    password: ${DB_PASSWORD:photo-local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+photo:
+  storage:
+    endpoint: ${STORAGE_ENDPOINT:http://localhost:4443}
+    original-bucket: ${ORIGINAL_BUCKET:fotos-usuarios-original}
+    processed-bucket: ${PROCESSED_BUCKET:fotos-usuarios-processadas}
+  upload:
+    max-bytes: ${PHOTO_MAX_BYTES:10485760}
+  reconciliation:
+    stale-after: ${PHOTO_STALE_AFTER:15m}
+
