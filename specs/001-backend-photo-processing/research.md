@@ -16,6 +16,14 @@ plugin TwelveMonkeys amplia robustez de leitura JPEG e possui correções releva
 metadata-extractor ainda deixaria transformação manual; ImageMagick/IM4Java aumentaria imagem,
 cold start e operação nativa.
 
+**Proteção contra image bombs**: O `photo-processor` adotará a propriedade configurável
+`photo.processing.max-pixels`, com padrão de `25_000_000` pixels. Sempre que for tecnicamente
+possível obter largura e altura previamente, o limite será verificado antes da decodificação completa
+e transformação, calculando `largura × altura` de forma segura contra overflow. Imagens exatamente
+no limite são aceitas; acima dele constituem erro funcional definitivo de processamento e seguem o
+fluxo existente de `PhotoProcessingError` / `ERRO_PROCESSAMENTO`. A proteção é independente do
+limite HTTP de 10 MiB e não requer biblioteca adicional.
+
 **Sources**: [Thumbnailator](https://github.com/coobird/thumbnailator),
 [Builder API](https://coobird.github.io/thumbnailator/javadoc/0.4.19/net/coobird/thumbnailator/Thumbnails.Builder.html),
 [TwelveMonkeys](https://github.com/haraldk/TwelveMonkeys),

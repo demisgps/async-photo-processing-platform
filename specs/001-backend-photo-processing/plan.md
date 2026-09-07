@@ -297,9 +297,14 @@ Thumbnailator 0.4.21 é o pipeline por ser Java puro, pequeno e oferecer `useExi
 bounding box com proporção e no-upscale. TwelveMonkeys ImageIO JPEG complementa a decodificação de
 JPEGs reais e correções relevantes ao JDK 25. JPEG mantém formato com qualidade inicial 0,85
 (configurável e calibrada em testes); PNG preserva alpha e usa compressão lossless. Magic bytes e
-decoder, não extensão/MIME isolados, determinam formato. Um limite configurável de pixels decodifica
-com segurança contra imagens-bomba. ImageMagick foi rejeitado por dependência nativa/cold start;
-Java2D puro por exigir orientação e pipeline manual.
+decoder, não extensão/MIME isolados, determinam formato. O `photo-processor` aplica a propriedade
+configurável `photo.processing.max-pixels`, com valor padrão de `25_000_000` pixels, antes da
+decodificação completa e transformação sempre que as dimensões puderem ser obtidas previamente. O
+cálculo `largura × altura` deve ser seguro contra overflow; valor exatamente igual ao limite é aceito,
+e valor superior produz erro funcional definitivo, publicado como `PhotoProcessingError` e
+posteriormente refletido como `ERRO_PROCESSAMENTO` pelo fluxo existente. Essa proteção operacional
+contra image bombs é independente do limite HTTP de 10 MiB. ImageMagick foi rejeitado por
+dependência nativa/cold start; Java2D puro por exigir orientação e pipeline manual.
 
 ## Test Strategy
 
