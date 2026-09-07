@@ -71,14 +71,15 @@ Variáveis mínimas:
 | Variable | Initial value |
 |---|---|
 | `baseUrl` | `http://localhost:8080` |
-| `usuarioId` | vazio; capturado no cadastro |
+| `usuarioId` | vazio; capturado de `response.id` no cadastro (`usuarioId = response.id`) |
 | `processamentoId` | vazio; capturado em cada upload |
 
 Nenhum segredo real deve existir no environment.
 
 ## 4. Happy path
 
-1. Cadastrar com nome e JPG/PNG válido; esperar 201 e capturar IDs.
+1. Cadastrar com nome e JPG/PNG válido; esperar 201, atribuir `usuarioId = response.id` e capturar
+   `processamentoId`.
 2. Consultar processamento; esperar 200 e estado observável.
 3. Consultar até `PERSISTIDA`, com limite de polling para não criar loop infinito.
 4. Consultar foto; esperar HTTP 200, `Content-Type` `image/jpeg` ou `image/png` e corpo não vazio.

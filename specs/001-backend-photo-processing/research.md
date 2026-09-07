@@ -92,7 +92,10 @@ empilhadas obscurecem a ordem Retry/Circuit Breaker; timeout externo não interr
 
 **Decision**: At-least-once com tópico `foto-processada`, subscription `photo-consumer-sub`, retry
 10–300s, ack deadline inicial 60s e 8 tentativas best-effort; DLT `foto-processada-dlq`, subscription
-`photo-consumer-dlq-sub`, retenção 7 dias. ACK só após commit ou no-op realmente terminal/inválido.
+`photo-consumer-dlq-sub`, retenção 7 dias. ACK só após commit ou no-op de mensagem contratualmente
+válida que seja duplicada, atrasada, fora de ordem, terminal ou logicamente não aplicável. Payload
+não desserializável, `schemaVersion` incompatível, IDs obrigatórios ausentes ou referência
+estruturalmente inválida falha/NACK e segue redelivery finita até a DLT.
 
 **Rationale**: Exactly-once não elimina duplicata do publisher e adiciona restrições/latência. A
 idempotência por `processamentoId` continua necessária. DLT retém diagnóstico e recuperação.
@@ -120,10 +123,13 @@ empates/semântica fraca; ordering key não substitui controle transacional.
 
 ## Retomada de persistência final
 
-**Decision**: Redelivery válida do mesmo `processamentoId` em `PERSISTINDO` retoma o trabalho. Dados
-já presentes são validados/reutilizados, o BLOB não é duplicado, e metadados, promoção e
-`PERSISTIDA` concluem transacionalmente. Falha definitiva registrável leva a `ERRO_PERSISTENCIA`.
-ACK só ocorre após commit ou no-op realmente terminal/definitivamente inválido.
+**Decision**: Somente um `PhotoProcessingResult` equivalente do mesmo `processamentoId` em
+`PERSISTINDO` retoma o trabalho. Dados já presentes são validados/reutilizados, o BLOB não é
+duplicado, e metadados, promoção e `PERSISTIDA` concluem transacionalmente. Um
+`PhotoProcessingError` recebido em `PERSISTINDO` é ACK/no-op rastreável e não regride o estado para
+`ERRO_PROCESSAMENTO`. Falha definitiva registrável leva a `ERRO_PERSISTENCIA`. ACK só ocorre após
+commit ou no-op contratualmente válido; mensagem malformada ou contratualmente inválida falha/NACK
+até a DLT.
 
 **Rationale**: `PERSISTINDO` é ativo e pode representar entrega interrompida depois de parte do
 trabalho; tratá-lo como fora de ordem deixaria o usuário bloqueado permanentemente.

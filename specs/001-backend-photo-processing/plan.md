@@ -192,17 +192,24 @@ negócio. Não há diretório frontend.
 
 - Inclui Spring Boot Actuator com a mesma exposição restrita de health, liveness e readiness do
   `photo-api`, permitindo checks locais e futura integração com containers/orquestração.
-- StreamingPull com flow control alinhado ao pool MySQL; ACK somente após commit ou no-op terminal.
-- Valida schema e referências. Mensagem inválida é redeliverada até DLT para diagnóstico.
+- StreamingPull com flow control alinhado ao pool MySQL; ACK somente após commit ou no-op de
+  mensagem contratualmente válida que seja duplicada, atrasada, fora de ordem, terminal ou
+  logicamente não aplicável pelas regras monotônicas.
+- Valida schema e referências. Payload não desserializável, `schemaVersion` incompatível, IDs
+  obrigatórios ausentes ou referência estruturalmente inválida falha/NACK e é redeliverado até a DLT
+  para diagnóstico, sem descarte silencioso.
 - Trava `PROCESSAMENTO_FOTO` e `USUARIO`; transições usam estado esperado e nunca regridem.
-- `PROCESSADA -> PERSISTINDO` é condicional. Download ocorre fora da transação longa. Redelivery
-  válida do mesmo `processamentoId` encontrada em `PERSISTINDO` retoma a persistência final; não é
-  fora de ordem nem no-op. A retomada valida/reutiliza BLOB e metadados existentes quando aplicável,
-  sem duplicá-los, e conclui metadados, promoção e `PERSISTIDA` no mesmo commit. Falha definitiva
-  registrável termina em `ERRO_PERSISTENCIA`.
-- Duplicata terminal equivalente vira ACK/no-op; mensagem antiga/fora de ordem vira ACK/no-op com
-  log. ACK ocorre somente após commit, terminal no-op ou mensagem definitivamente inválida tratada.
-  Falha transitória do banco causa NACK. Esgotamento vai ao DLT; handler tenta marcar
+- `PROCESSADA -> PERSISTINDO` é condicional. Download ocorre fora da transação longa. Somente um
+  `PhotoProcessingResult` equivalente do mesmo `processamentoId` encontrado em `PERSISTINDO` retoma
+  a persistência final; não é fora de ordem nem no-op. A retomada valida/reutiliza BLOB e metadados
+  existentes quando aplicável, sem duplicá-los, e conclui metadados, promoção e `PERSISTIDA` no mesmo
+  commit. `PhotoProcessingError` recebido em `PERSISTINDO` é ACK/no-op rastreável e não causa regressão
+  para `ERRO_PROCESSAMENTO`. Falha definitiva registrável da persistência termina em
+  `ERRO_PERSISTENCIA`.
+- Mensagem contratualmente válida duplicada, antiga, fora de ordem, terminal ou logicamente não
+  aplicável vira ACK/no-op com log. Mensagem malformada ou contratualmente inválida nunca recebe ACK
+  para descarte: falha/NACK até a DLT. Falha transitória do banco causa NACK. Esgotamento vai ao DLT;
+  handler tenta marcar
   `ERRO_PERSISTENCIA` sem regredir terminal. Com banco totalmente indisponível, NACK na subscription
   do DLT mantém redelivery/retenção e gera log crítico; não há segunda DLQ.
 
@@ -264,7 +271,7 @@ Pub/Sub/photo-consumer-sub -> photo-consumer -> Cloud SQL for MySQL
 | Processor -> Pub/Sub | UNAVAILABLE, DEADLINE_EXCEEDED, ABORTED, transient RESOURCE_EXHAUSTED | RPC 5s; total 20s | 4 total, 250ms x2, cap 4s, jitter | INVALID_ARGUMENT, auth, permission, NOT_FOUND, structural quota/config | No |
 | Consumer -> Storage | unavailable/deadline/429/5xx | RPC 10s; total 20s | 3 total, 200ms x2, cap 2s, jitter | invalid ref/auth/permission/not found | Yes, same GCS profile |
 | Consumer -> MySQL | deadlock/lock timeout | pool wait 3s; validation 1s; statement 10s | transaction inteira, 2 total, 100ms + jitter | constraint/domain/syntax/auth; outage causes NACK | No |
-| Pub/Sub delivery | NACK, subscriber outage | ack deadline 60s com lease | broker: min 10s/max 300s; 8 attempts best-effort | ACK após commit ou no-op terminal/inválido | N/A |
+| Pub/Sub delivery | NACK, subscriber outage | ack deadline 60s com lease | broker: min 10s/max 300s; 8 attempts best-effort | ACK após commit ou no-op válido duplicado/atrasado/fora de ordem/terminal/não aplicável; inválida falha/NACK | N/A |
 
 Resilience4j 2.4.0 será usado explicitamente no `photo-api` e no `photo-consumer` para os circuitos
 de chamadas síncronas a Storage; sua compatibilidade Spring Boot 4 é declarada upstream, mas o
@@ -280,7 +287,9 @@ genérico evitam retry storms. Erros 4xx, validações e domínio não contam no
 Pub/Sub usa tópico `foto-processada`, subscription `photo-consumer-sub`, DLT
 `foto-processada-dlq` e subscription `photo-consumer-dlq-sub`. O máximo de 8 entregas é
 best-effort. A DLT retém mensagens por 7 dias; falha total do banco causa NACK na subscription da
-DLT e alerta por log, permitindo recuperação antes da expiração.
+DLT e alerta por log, permitindo recuperação antes da expiração. `processamentoId` é a chave
+principal quando presente ou recuperável; mensagem malformada sem esse ID preserva Pub/Sub message
+ID, `eventId` recuperável, atributos disponíveis e payload bruto original, sem inventar ID.
 
 ## Image Processing Decision
 

@@ -57,7 +57,9 @@
 ```text
 RECEBIDA -> PROCESSANDO -> PROCESSADA -> PERSISTINDO -> PERSISTIDA
                     \-> ERRO_PROCESSAMENTO
-                                      \-> ERRO_PERSISTENCIA
+PROCESSADA  ---------\
+                      -> ERRO_PERSISTENCIA
+PERSISTINDO ---------/
 ```
 
 | From | To | Owner / condition |
@@ -74,10 +76,14 @@ Estados terminais nunca transitam. Evento repetido, antigo ou fora de ordem é n
 Enquanto a falha de publicação não for detectável/registrável, `PROCESSANDO` permanece ativo e
 bloqueia upload/exclusão.
 
-`PERSISTINDO` não é terminal nem no-op: uma redelivery válida do mesmo `processamentoId` retoma a
-persistência final, valida e reutiliza dados existentes e evita duplicar o BLOB. Conclui promoção,
-metadados e `PERSISTIDA` em transação, ou chega a `ERRO_PERSISTENCIA` se a falha definitiva puder
-ser registrada. ACK ocorre apenas após commit ou no-op realmente terminal/inválido.
+`PERSISTINDO` não é terminal nem no-op: somente um `PhotoProcessingResult` equivalente do mesmo
+`processamentoId` retoma a persistência final, valida e reutiliza dados existentes e evita duplicar
+o BLOB. Conclui promoção, metadados e `PERSISTIDA` em transação, ou chega a
+`ERRO_PERSISTENCIA` se a falha definitiva puder ser registrada. Um `PhotoProcessingError` recebido
+em `PERSISTINDO` é ACK/no-op rastreável e não regride para `ERRO_PROCESSAMENTO`. ACK ocorre apenas
+após commit ou no-op de mensagem contratualmente válida duplicada, atrasada, fora de ordem,
+terminal ou logicamente não aplicável. Mensagem malformada ou contratualmente inválida falha/NACK e
+segue redelivery finita até a DLT.
 
 ## Atomic promotion
 
@@ -92,7 +98,8 @@ ser registrada. ACK ocorre apenas após commit ou no-op realmente terminal/invá
 
 - Processor: objeto determinístico + metadados origem/algoritmo + create-if-absent.
 - Consumer: PK por `processamentoId`, locks/CAS e ACK depois do commit.
-- Redelivery em `PERSISTINDO`: retoma, não regride e não é classificada como mensagem fora de ordem.
+- `PhotoProcessingResult` equivalente em `PERSISTINDO`: retoma, não regride e não é classificado como
+  mensagem fora de ordem; `PhotoProcessingError` nesse estado é ACK/no-op rastreável.
 - Promoção: sequência monotônica impede foto antiga; terminal equivalente é ACK/no-op.
 - Exclusão: chaves permanecem consultáveis até limpeza integral; objeto ausente equivale a removido.
 

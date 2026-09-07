@@ -1,7 +1,9 @@
 # Event Contracts
 
-Os envelopes são Records imutáveis. Campos desconhecidos são tolerados; `schemaVersion` incompatível,
-IDs ausentes ou referência inválida não são processados silenciosamente. Nenhum evento contém bytes.
+Os envelopes são Records imutáveis. Campos desconhecidos são tolerados; payload não desserializável,
+`schemaVersion` incompatível, IDs obrigatórios ausentes ou referência estruturalmente inválida não
+são processados nem descartados silenciosamente: falham/NACK e seguem redelivery finita até a DLT.
+Nenhum evento contém bytes.
 O sistema não depende da ordem de entrega do Pub/Sub: `processamentoId`, `sequencia_upload`, state
 machine, CAS/locks e tratamento idempotente preservam ordem lógica e monotonicidade.
 
@@ -72,17 +74,25 @@ estado, sem pressupor ordem de entrega.
 Mensagem de erro definitiva não carrega stack trace, segredo ou bytes. Evento atrasado para terminal
 é ACK/no-op rastreável.
 
-Uma mensagem válida para o mesmo `processamentoId` em `PERSISTINDO` não é considerada atrasada,
-fora de ordem ou no-op: ela retoma idempotentemente a persistência final. Dados já existentes são
-validados/reutilizados, o BLOB não é duplicado e o commit conclui metadados, promoção e
-`PERSISTIDA`; falha definitiva registrável leva a `ERRO_PERSISTENCIA`.
+Somente um `PhotoProcessingResult` equivalente para o mesmo `processamentoId` em `PERSISTINDO` não
+é considerado atrasado, fora de ordem ou no-op: ele retoma idempotentemente a persistência final.
+Dados já existentes são validados/reutilizados, o BLOB não é duplicado e o commit conclui
+metadados, promoção e `PERSISTIDA`; falha definitiva registrável leva a `ERRO_PERSISTENCIA`. Um
+`PhotoProcessingError` recebido quando o processamento já está em `PERSISTINDO` é ACK/no-op
+rastreável e não pode causar regressão para `ERRO_PROCESSAMENTO`. Estados terminais nunca regridem.
 
 ## Consumer and DLT semantics
 
-- ACK somente após commit de sucesso ou decisão idempotente realmente terminal/inválida.
-- Transitório: NACK/exceção; broker redelivera.
+- ACK somente após commit de sucesso ou decisão idempotente sobre mensagem contratualmente válida
+  duplicada, atrasada, fora de ordem, terminal ou logicamente não aplicável pelas regras monotônicas.
+- Falha transitória ou mensagem malformada/contratualmente inválida: NACK/exceção; broker redelivera
+  de forma finita até a DLT.
 - Após 8 tentativas best-effort: encaminhamento a `foto-processada-dlq` preserva payload e atributos.
-- Atributos mínimos: `schemaVersion`, `processamentoId`, `usuarioId`, `eventType`.
+- Quando presentes ou recuperáveis, preservar `schemaVersion`, `processamentoId`, `usuarioId`,
+  `eventId` e `eventType`; `processamentoId` permanece a chave principal quando disponível.
+- Para mensagem malformada sem `processamentoId` recuperável, preservar Pub/Sub message ID,
+  `eventId` quando recuperável, atributos disponíveis e payload bruto original para investigação,
+  sem inventar `processamentoId`.
 - Handler DLT tenta `ERRO_PERSISTENCIA` se estado ainda permitir; banco indisponível causa NACK na
   subscription DLT. Retenção planejada: 7 dias; sem segunda DLQ.
 - Tópico único centraliza sucesso e erro, mas não implica ordenação. Duplicatas, atrasos e mensagens

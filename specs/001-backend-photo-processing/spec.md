@@ -259,10 +259,12 @@ processamento e falha definitiva de persistência.
   `ERRO_PERSISTENCIA` quando registrável.
 - **FR-023**: Toda operação direcionada a `usuarioId` inexistente MUST retornar HTTP 404, incluindo
   consulta, atualização de nome, exclusão, consulta da foto e upload posterior. Consulta a
-  `processamentoId` inexistente MUST retornar HTTP 404. A consulta de foto de usuário existente cuja
-  foto ainda esteja sendo processada MUST retornar HTTP 409, com erro que indique indisponibilidade
-  temporária. Se o usuário existir, não possuir foto atual e todos os seus processamentos estiverem
-  em estado terminal de erro, a consulta da foto MUST retornar HTTP 404.
+  `processamentoId` inexistente MUST retornar HTTP 404. Se existir foto atual `PERSISTIDA`, a consulta
+  MUST retorná-la com HTTP 200 mesmo enquanto uma substituição estiver em `PROCESSANDO`. Se houver
+  processamento ativo e ainda não existir nenhuma foto atual `PERSISTIDA`, a consulta MUST retornar
+  HTTP 409, indicando indisponibilidade temporária. Se o usuário existir, não possuir foto atual e
+  todos os seus processamentos estiverem em estado terminal de erro, a consulta MUST retornar HTTP
+  404.
 - **FR-024**: O contrato MUST incluir cadastro (`POST /api/v1/usuarios`), listagem e consulta,
   atualização de nome, exclusão, foto atual, upload posterior e consulta por `processamentoId`, nos
   caminhos definidos no documento-fonte.
@@ -282,11 +284,14 @@ processamento e falha definitiva de persistência.
   processada correspondente já existir após falha de publicação, MUST poder reutilizá-la e tentar
   publicar novamente sem reprocessar desnecessariamente a original e sem efeitos duplicados.
 - **FR-030**: Mensagens de consumo Pub/Sub que excederem o limite configurado de tentativas de
-  entrega ou processamento MUST ser encaminhadas a um Dead Letter Topic e MUST permanecer
-  rastreáveis pelo `processamentoId`. Quando o estado ainda puder ser registrado, o processamento
-  MUST transitar para `ERRO_PERSISTENCIA` antes ou em conjunto com esse encaminhamento. Isso MUST
-  NOT substituir idempotência ou registro e tratamento de erros; limites e configuração exatos
-  pertencem ao planejamento.
+  entrega ou processamento MUST ser encaminhadas a um Dead Letter Topic. Quando o
+  `processamentoId` estiver presente ou puder ser recuperado, ele MUST permanecer como chave
+  principal de rastreabilidade. Mensagens malformadas sem `processamentoId` recuperável MUST NOT
+  receber identificador inventado e MUST preservar Pub/Sub message ID, `eventId` quando recuperável,
+  atributos disponíveis e payload bruto original para investigação. Quando o estado ainda puder ser
+  registrado, o processamento MUST transitar para `ERRO_PERSISTENCIA` antes ou em conjunto com esse
+  encaminhamento. Isso MUST NOT substituir idempotência ou registro e tratamento de erros; limites
+  e configuração exatos pertencem ao planejamento.
 - **FR-031**: Retry, redelivery ou reexecução MUST NOT duplicar persistência, promover uma foto mais
   de uma vez, promover a foto errada, corromper estados ou reprocessar desnecessariamente quando o
   resultado daquele `processamentoId` já existir. Mensagem atrasada ou fora de ordem para um
@@ -344,7 +349,9 @@ processamento e falha definitiva de persistência.
 - **SC-012**: Em 100% dos cenários testados de retry ou redelivery, não há persistência duplicada,
   promoção repetida ou incorreta da foto atual nem corrupção de estado.
 - **SC-013**: 100% das mensagens de consumo que esgotam o limite configurado são encaminhadas ao
-  Dead Letter Topic e continuam rastreáveis pelo `processamentoId`.
+  Dead Letter Topic; permanecem rastreáveis pelo `processamentoId` quando presente ou recuperável e,
+  nos demais casos, por Pub/Sub message ID, `eventId` recuperável, atributos disponíveis e payload
+  bruto original, sem criação artificial de `processamentoId`.
 - **SC-014**: Em 100% dos cenários de timeout e falhas transitórias testados, as tentativas são
   finitas, operações inseguras ou erros não transitórios não são repetidos, e o resultado final é
   observável como sucesso, falha tratada ou comunicação não concluída.

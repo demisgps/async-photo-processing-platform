@@ -15,7 +15,8 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              description: Deve conter exatamente uma parte foto; partes foto repetidas são rejeitadas.
+              additionalProperties: false
+              description: A única parte de arquivo aceita se chama foto. Deve existir exatamente uma parte de arquivo/imagem; foto repetida, imagens sob nomes diferentes ou qualquer multipart com mais de um arquivo são rejeitados. A implementação conta as partes porque o schema não detecta campos multipart repetidos.
               required: [nome, foto]
               properties:
                 nome: { type: string, minLength: 2, maxLength: 150 }
@@ -86,7 +87,7 @@ paths:
       operationId: consultarFotoAtual
       responses:
         '200':
-          description: Bytes da foto processada atual
+          description: Bytes da foto atual PERSISTIDA; durante uma substituição em PROCESSANDO, retorna a foto anterior
           content:
             image/jpeg: { schema: { type: string, format: binary } }
             image/png: { schema: { type: string, format: binary } }
@@ -103,7 +104,8 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              description: Deve conter exatamente uma parte foto; partes foto repetidas são rejeitadas.
+              additionalProperties: false
+              description: A única parte de arquivo aceita se chama foto. Deve existir exatamente uma parte de arquivo/imagem; foto repetida, imagens sob nomes diferentes ou qualquer multipart com mais de um arquivo são rejeitados. A implementação conta as partes porque o schema não detecta campos multipart repetidos.
               required: [foto]
               properties:
                 foto: { type: string, format: binary }
@@ -229,7 +231,7 @@ components:
       description: Usuário possui processamento ativo
       content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
     FotoIndisponivel:
-      description: Foto ainda está em processamento
+      description: Existe processamento ativo, mas ainda não há nenhuma foto atual PERSISTIDA; se houver foto anterior PERSISTIDA durante substituição, ela é retornada com HTTP 200
       content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
     FalhaInterna:
       description: Operação não pôde ser concluída integralmente
