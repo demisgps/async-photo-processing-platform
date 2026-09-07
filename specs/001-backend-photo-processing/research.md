@@ -155,3 +155,22 @@ operação ou rede suficientes para escolher responsavelmente o runtime dos serv
 
 **Alternatives considered**: Selecionar agora qualquer runtime apenas preencheria o plano e poderia
 antecipar complexidade operacional sem requisito concreto.
+
+## Health, liveness e readiness
+
+**Decision**: Adotar Spring Boot Actuator no `photo-api` e no `photo-consumer`, com exposição
+restrita a `/actuator/health`, `/actuator/health/liveness` e `/actuator/health/readiness` quando
+aplicável. O `photo-processor` não usa Actuator porque permanece Cloud Run Function executada pelo
+Functions Framework.
+
+**Rationale**: Serviços de longa duração precisam indicar saúde, capacidade de receber tráfego e
+vivacidade no fluxo local e em futura implantação gerenciada. A função tem ciclo de execução e
+mecanismo operacional diferentes, portanto Actuator não agrega valor.
+
+**Alternatives considered**: Checks ad hoc duplicariam uma capacidade padrão do Spring Boot;
+expor todos os endpoints Actuator ampliaria superfície operacional sem necessidade. Prometheus e
+Grafana foram rejeitados na Fase 1 porque health estruturado e logs existentes atendem ao MVP.
+
+Actuator é infraestrutura operacional, não parte do contrato funcional da aplicação; seus endpoints
+não entram no OpenAPI. Endpoints administrativos desnecessários permanecem desabilitados ou não
+expostos.

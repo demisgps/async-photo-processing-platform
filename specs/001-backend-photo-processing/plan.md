@@ -24,8 +24,8 @@ somente aos modos de falha documentados, com budgets conjuntos e finitos por int
 
 **Language/Version**: Java 25
 
-**Primary Dependencies**: Spring Boot 4.0.0 (`photo-api`, `photo-consumer`), Spring Data JPA,
-Validation, Flyway, Google Cloud Storage/Pub/Sub Java clients, Functions Framework Java
+**Primary Dependencies**: Spring Boot 4.0.0 e Spring Boot Actuator (`photo-api`, `photo-consumer`),
+Spring Data JPA, Validation, Flyway, Google Cloud Storage/Pub/Sub Java clients, Functions Framework Java
 (`photo-processor`), Thumbnailator 0.4.21, TwelveMonkeys ImageIO JPEG, Resilience4j Spring Boot 4
 2.4.0 apenas nos serviços long-lived onde indicado
 
@@ -151,6 +151,10 @@ negócio. Não há diretório frontend.
 ### photo-api
 
 - Expõe exatamente o contrato em `contracts/openapi.yaml`.
+- Inclui Spring Boot Actuator para expor somente `/actuator/health`,
+  `/actuator/health/liveness` e `/actuator/health/readiness` quando aplicável. Esses endpoints são
+  operacionais, não integram o contrato funcional OpenAPI, e endpoints administrativos adicionais
+  não são expostos na Fase 1.
 - Valida nome, cardinalidade, magic bytes/decodificação e limite antes de criar dados permanentes.
 - Sob lock do usuário, aloca `sequencia_upload`, cria o processamento e usa a restrição exclusiva
   de processamento ativo; grava a original com chave determinística e precondição create-only.
@@ -181,10 +185,13 @@ negócio. Não há diretório frontend.
   plataforma. Duplicata de publicação é aceita e neutralizada no consumer.
 - Erro definitivo de imagem publica evento `ERRO_PROCESSAMENTO`; se a publicação estiver totalmente
   indisponível, preserva logs correlacionados e deixa a reconciliação posterior concluir quando
-  detectável. Não acessa MySQL e não usa Circuit Breaker.
+  detectável. Não acessa MySQL, não usa Circuit Breaker e não inclui Spring Boot Actuator; sua
+  disponibilidade é verificada pelo Functions Framework e por entrega de CloudEvent de teste.
 
 ### photo-consumer
 
+- Inclui Spring Boot Actuator com a mesma exposição restrita de health, liveness e readiness do
+  `photo-api`, permitindo checks locais e futura integração com containers/orquestração.
 - StreamingPull com flow control alinhado ao pool MySQL; ACK somente após commit ou no-op terminal.
 - Valida schema e referências. Mensagem inválida é redeliverada até DLT para diagnóstico.
 - Trava `PROCESSAMENTO_FOTO` e `USUARIO`; transições usam estado esperado e nunca regridem.
@@ -312,6 +319,11 @@ bytes, imagem, segredo ou dados sensíveis desnecessários. Eventos mínimos: up
 save/HEAD/reuse, publish iniciado/confirmado/falhou, retry/timeout, circuit opened/half-open/closed,
 redelivery/ACK/NACK/DLT, promoção/no-op, reconciliação e falha de exclusão. Não se adiciona plataforma
 de observabilidade na Fase 1.
+
+Spring Boot Actuator fornece health, liveness e readiness somente para `photo-api` e
+`photo-consumer`. A exposição fica limitada aos três endpoints necessários; métricas e endpoints
+administrativos sensíveis não são publicados. Prometheus, Grafana ou outra plataforma adicional não
+são introduzidos. O Actuator é infraestrutura operacional e não altera o contrato funcional.
 
 ## Postman and Local Validation
 

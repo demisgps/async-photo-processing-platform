@@ -44,10 +44,18 @@ O bootstrap deve criar:
 - tópico `foto-processada`, subscription `photo-consumer-sub`;
 - tópico `foto-processada-dlq`, subscription `photo-consumer-dlq-sub`.
 
-Verifique separadamente os endpoints de health/readiness de `photo-api` e `photo-consumer`. Para o
-`photo-processor`, verifique apenas que o Functions Framework está disponível e consegue receber um
-CloudEvent de teste entregue pelo dispatcher local conforme [events.md](contracts/events.md); essa
-disponibilidade não equivale aos checks de health/readiness dos serviços Spring Boot.
+Valide separadamente, sem transformar este guia em referência de configuração do Actuator:
+
+- `photo-api`: consultar `/actuator/health`; consultar `/actuator/health/liveness` e
+  `/actuator/health/readiness` quando configurados.
+- `photo-consumer`: consultar `/actuator/health`; consultar `/actuator/health/liveness` e
+  `/actuator/health/readiness` quando configurados.
+- `photo-processor`: não possui Actuator. Verificar somente a disponibilidade do Functions
+  Framework e o recebimento de um CloudEvent de teste entregue pelo dispatcher local conforme
+  [events.md](contracts/events.md).
+
+A disponibilidade do Functions Framework não equivale aos checks de health/readiness dos serviços
+Spring Boot. Endpoints Actuator além dos três checks de health necessários não devem estar expostos.
 
 ## 3. Configure Postman
 
