@@ -1,0 +1,236 @@
+openapi: 3.1.0
+info:
+  title: Async Photo Processing Platform API
+  version: 1.0.0
+  description: Contrato funcional backend-only da Fase 1.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/usuarios:
+    post:
+      operationId: cadastrarUsuario
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: Deve conter exatamente uma parte foto; partes foto repetidas são rejeitadas.
+              required: [nome, foto]
+              properties:
+                nome: { type: string, minLength: 2, maxLength: 150 }
+                foto: { type: string, format: binary }
+      responses:
+        '201':
+          description: Usuário criado e processamento assíncrono aceito em PROCESSANDO
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioCriado' }
+        '400': { $ref: '#/components/responses/ValidacaoInvalida' }
+        '413': { $ref: '#/components/responses/ArquivoMuitoGrande' }
+        '415': { $ref: '#/components/responses/FormatoNaoSuportado' }
+        '500': { $ref: '#/components/responses/FalhaInterna' }
+    get:
+      operationId: listarUsuarios
+      responses:
+        '200':
+          description: Usuários cadastrados
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/UsuarioResumo' }
+  /api/v1/usuarios/{usuarioId}:
+    parameters:
+      - $ref: '#/components/parameters/UsuarioId'
+    get:
+      operationId: consultarUsuario
+      responses:
+        '200':
+          description: Usuário localizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioDetalhe' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+    put:
+      operationId: atualizarNome
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome]
+              additionalProperties: false
+              properties:
+                nome: { type: string, minLength: 2, maxLength: 150 }
+      responses:
+        '200':
+          description: Nome atualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsuarioDetalhe' }
+        '400': { $ref: '#/components/responses/ValidacaoInvalida' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+    delete:
+      operationId: excluirUsuario
+      responses:
+        '204': { description: Usuário e dados associados removidos integralmente }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '409': { $ref: '#/components/responses/ConflitoProcessamento' }
+        '500': { $ref: '#/components/responses/FalhaInterna' }
+  /api/v1/usuarios/{usuarioId}/foto:
+    parameters:
+      - $ref: '#/components/parameters/UsuarioId'
+    get:
+      operationId: consultarFotoAtual
+      responses:
+        '200':
+          description: Bytes da foto processada atual
+          content:
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '409': { $ref: '#/components/responses/FotoIndisponivel' }
+  /api/v1/usuarios/{usuarioId}/fotos:
+    parameters:
+      - $ref: '#/components/parameters/UsuarioId'
+    post:
+      operationId: atualizarFoto
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: Deve conter exatamente uma parte foto; partes foto repetidas são rejeitadas.
+              required: [foto]
+              properties:
+                foto: { type: string, format: binary }
+      responses:
+        '202':
+          description: Novo processamento aceito em PROCESSANDO
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProcessamentoAceito' }
+        '400': { $ref: '#/components/responses/ValidacaoInvalida' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+        '409': { $ref: '#/components/responses/ConflitoProcessamento' }
+        '413': { $ref: '#/components/responses/ArquivoMuitoGrande' }
+        '415': { $ref: '#/components/responses/FormatoNaoSuportado' }
+        '500': { $ref: '#/components/responses/FalhaInterna' }
+  /api/v1/processamentos/{processamentoId}:
+    get:
+      operationId: consultarProcessamento
+      parameters:
+        - name: processamentoId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Estado atual do processamento
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Processamento' }
+        '404': { $ref: '#/components/responses/NaoEncontrado' }
+components:
+  parameters:
+    UsuarioId:
+      name: usuarioId
+      in: path
+      required: true
+      schema: { type: integer, format: int64, minimum: 1 }
+  schemas:
+    StatusProcessamento:
+      type: string
+      enum: [RECEBIDA, PROCESSANDO, PROCESSADA, PERSISTINDO, PERSISTIDA,
+             ERRO_PROCESSAMENTO, ERRO_PERSISTENCIA]
+    UsuarioCriado:
+      type: object
+      required: [id, nome, processamentoId, status]
+      properties:
+        id: { type: integer, format: int64 }
+        nome: { type: string }
+        processamentoId: { type: string, format: uuid }
+        status:
+          type: string
+          const: PROCESSANDO
+    UsuarioResumo:
+      type: object
+      required: [id, nome, foto]
+      properties:
+        id: { type: integer, format: int64 }
+        nome: { type: string }
+        foto: { $ref: '#/components/schemas/FotoAtualResumo' }
+    UsuarioDetalhe:
+      allOf:
+        - $ref: '#/components/schemas/UsuarioResumo'
+        - type: object
+          properties:
+            dataCadastro: { type: string, format: date-time }
+            dataAtualizacao: { type: string, format: date-time }
+    FotoAtualResumo:
+      type: object
+      required: [disponivel]
+      properties:
+        disponivel: { type: boolean }
+        processamentoId: { type: [string, 'null'], format: uuid }
+        status: { oneOf: [{ $ref: '#/components/schemas/StatusProcessamento' }, { type: 'null' }] }
+    ProcessamentoAceito:
+      type: object
+      required: [processamentoId, usuarioId, status]
+      properties:
+        processamentoId: { type: string, format: uuid }
+        usuarioId: { type: integer, format: int64 }
+        status:
+          type: string
+          const: PROCESSANDO
+    Processamento:
+      type: object
+      required: [processamentoId, usuarioId, status]
+      properties:
+        processamentoId: { type: string, format: uuid }
+        usuarioId: { type: integer, format: int64 }
+        status: { $ref: '#/components/schemas/StatusProcessamento' }
+        erroCodigo: { type: [string, 'null'] }
+        erroDetalhe: { type: [string, 'null'] }
+    Erro:
+      type: object
+      required: [status, codigo, mensagem, timestamp]
+      properties:
+        status: { type: integer }
+        codigo: { type: string }
+        mensagem: { type: string }
+        timestamp: { type: string, format: date-time }
+        processamentoId: { type: [string, 'null'], format: uuid }
+        campos:
+          type: array
+          items:
+            type: object
+            required: [campo, mensagem]
+            properties:
+              campo: { type: string }
+              mensagem: { type: string }
+  responses:
+    ValidacaoInvalida:
+      description: Nome/requisição inválida, foto ausente ou múltiplas imagens
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
+    ArquivoMuitoGrande:
+      description: Arquivo acima de 10 MiB (10.485.760 bytes)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
+    FormatoNaoSuportado:
+      description: Conteúdo não é JPG/JPEG ou PNG suportado
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
+    NaoEncontrado:
+      description: Usuário, processamento ou foto terminal inexistente
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
+    ConflitoProcessamento:
+      description: Usuário possui processamento ativo
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
+    FotoIndisponivel:
+      description: Foto ainda está em processamento
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
+    FalhaInterna:
+      description: Operação não pôde ser concluída integralmente
+      content: { application/json: { schema: { $ref: '#/components/schemas/Erro' } } }
