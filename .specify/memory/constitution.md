@@ -1,18 +1,17 @@
 <!--
 Sync Impact Report
-- Version change: template (unratified) -> 1.0.0
+- Version change: 1.0.0 -> 1.1.0
 - Modified principles:
-  - template placeholder -> I. Backend First (NON-NEGOTIABLE)
-  - template placeholder -> II. Standardized Stack
-  - template placeholder -> III. Feature-Oriented, Pragmatic Design
-  - template placeholder -> IV. Automated and Functional Quality Gates
-  - template placeholder -> V. Asynchronous Architecture and Clear Boundaries
-  - Added VI. MVP Simplicity
-  - Added VII. Local-First, Cloud-Targeted Environments
-- Added sections:
-  - Permanent Technology Constraints
-  - Engineering Workflow and Quality Gates
-- Removed sections: none (template placeholders replaced)
+  - IV. Automated and Functional Quality Gates -> expanded with resilience failure-mode tests
+  - V. Asynchronous Architecture and Clear Boundaries -> expanded with safe re-execution, resume
+    after publication failure, and DLQ requirements
+  - VI. MVP Simplicity -> replaced blanket resilience prohibition with selective, pragmatic use
+- Added sections: none
+- Removed sections: none
+- Other updated guidance:
+  - Permanent Technology Constraints: resilience observability and processing correlation
+  - Engineering Workflow and Quality Gates: failure-mode justification, retry safety, DLQ, and
+    anti-cascade review requirements
 - Follow-up TODOs: none
 -->
 # Async Photo Processing Platform Constitution
@@ -49,7 +48,10 @@ cross-component behavior, MUST use Testcontainers where it provides production-l
 JaCoCo MUST enforce an initial minimum of 80% line coverage for the backend; coverage does not
 replace meaningful assertions or scenario coverage. The Postman collection MUST be the official
 functional validation of the Phase 1 API. A backend change is not complete while applicable tests
-fail, the coverage gate is unmet, or required Postman scenarios have not been validated.
+fail, the coverage gate is unmet, or required Postman scenarios have not been validated. Tests for
+external integrations and asynchronous flows MUST cover applicable transient failures, timeout,
+bounded retry, duplicate delivery, safe re-execution, exhausted delivery routed to a dead-letter
+destination, and recovery without duplicate side effects.
 
 ### V. Asynchronous Architecture and Clear Boundaries
 `photo-api` and `photo-consumer` MUST be independent Spring Boot microservices.
@@ -57,16 +59,41 @@ fail, the coverage gate is unmet, or required Postman scenarios have not been va
 image from object storage, write the processed image to object storage, and publish the result to
 Pub/Sub. Pub/Sub messages MUST carry references, identifiers, status, and metadata only; image
 bytes MUST NOT be placed on the message bus. `photo-consumer` MUST process deliveries idempotently
-so duplicate messages cannot duplicate persistence or corrupt state. These boundaries keep binary
-payloads in object storage and make asynchronous ownership explicit.
+so retry or duplicate delivery cannot duplicate persistence, promote the wrong current photo,
+repeat a promotion, or corrupt state. `photo-processor` MUST support safe re-execution for the same
+processing identifier. If the processed object already exists, a new attempt MUST be able to resume
+at result publication without unnecessarily processing the original again. In particular, saving
+the processed image followed by a publication failure MUST be recoverable safely.
+
+Pub/Sub flows MUST define a Dead Letter Topic or Queue strategy for messages that exceed the bounded
+delivery or processing attempt limit. Dead-lettered messages MUST remain traceable by processing
+identifier. A DLQ does not replace error handling, idempotency, or observability. These boundaries
+keep binary payloads in object storage and make asynchronous ownership and recovery explicit.
 
 ### VI. MVP Simplicity
 The MVP MUST NOT implement authentication, authorization, Spring Security, JWT, or OAuth2.
-Automatic Retry, Circuit Breaker, and Timeout mechanisms MUST NOT be introduced as resilience
-strategies in this phase. Full Clean Architecture or Hexagonal Architecture, speculative adapters,
-factories, interfaces, layers, technologies, and abstractions MUST NOT be added without a concrete,
-current requirement. The smallest design that satisfies the specification and quality gates MUST
-be preferred; any added complexity MUST be justified in the feature plan.
+Resilience mechanisms MUST be selected for concrete failure modes and MUST NOT be added uniformly,
+speculatively, or merely to increase architectural complexity.
+
+Retry MUST be limited to transient failures in external integrations, MUST have a maximum attempt
+count, and MUST NOT permit infinite attempts. Exponential backoff MUST be used when the documented
+failure mode and dependency behavior make it appropriate. Functional errors, business validation
+failures, and clearly non-transient failures MUST NOT be retried automatically. External calls MUST
+have an appropriate time limit when they could otherwise block indefinitely. A timeout MAY be
+combined with retry only when repeating the operation is safe and bounded.
+
+Circuit Breaker MUST be considered selectively for long-running components when repeated calls to
+an unavailable dependency can cause degradation or cascading failure. Its use MUST be justified in
+the feature plan and MUST NOT be applied automatically to every integration. The stateless,
+short-lived `photo-processor` MUST NOT receive a Circuit Breaker solely for architectural
+uniformity. Retry, timeout, Circuit Breaker, and DLQ policies MUST be designed together to avoid
+retry storms and cascading effects.
+
+Full Clean Architecture or Hexagonal Architecture, speculative adapters, factories, interfaces,
+layers, libraries, technologies, and abstractions MUST NOT be added without a concrete, current
+requirement. Exact libraries and retry, timeout, and Circuit Breaker parameters belong in feature
+planning, not this constitution. The smallest design that satisfies the specification, resilience
+needs, and quality gates MUST be preferred; any added complexity MUST be justified in the plan.
 
 ### VII. Local-First, Cloud-Targeted Environments
 The complete asynchronous flow MUST run and be validated locally before GCP deployment is treated
@@ -86,7 +113,9 @@ business logic, and secrets MUST remain outside version control.
 - Environment-specific endpoints, credentials, bucket names, topics, and database connections MUST
   be supplied through configuration.
 - Logs for asynchronous operations MUST include the processing correlation identifier defined by
-  the applicable feature contract.
+  the applicable feature contract. Logs for retries, timeouts, Circuit Breaker state changes, and
+  dead-letter routing MUST include that identifier whenever it is available, enabling end-to-end
+  tracing.
 - Business rules, API resources, state transitions, limits, and feature-specific acceptance
   scenarios MUST remain in feature specifications, not in this constitution.
 
@@ -94,7 +123,10 @@ business logic, and secrets MUST remain outside version control.
 
 1. Every feature specification and plan MUST pass a constitution check before implementation.
 2. Plans MUST identify component ownership, asynchronous boundaries, persistence changes, Flyway
-   migrations, relevant test levels, and local validation steps.
+   migrations, relevant test levels, and local validation steps. For every proposed retry, timeout,
+   Circuit Breaker, or DLQ, the plan MUST name the concrete failure mode, safe-operation conditions,
+   bounded-attempt behavior, and applicable observability. Exact libraries and parameters MUST be
+   decided there rather than elevated into permanent governance.
 3. Implementation MUST preserve Package by Feature and the Controller -> Service -> Repository
    dependency direction. Deviations require explicit justification in the plan and review.
 4. Changes MUST be verified with applicable unit and Testcontainers integration tests through the
@@ -102,7 +134,12 @@ business logic, and secrets MUST remain outside version control.
 5. Phase 1 completion MUST include an end-to-end local run and successful validation of required
    Postman scenarios. Frontend work is prohibited until this gate passes.
 6. Code review MUST reject unrequested technologies, speculative abstractions, image bytes in
-   Pub/Sub, database access from `photo-processor`, and non-idempotent consumer behavior.
+   Pub/Sub, database access from `photo-processor`, non-idempotent event handling, unbounded retry,
+   indiscriminate retry, and resilience combinations that can create retry storms or cascading
+   failure.
+7. Integration validation MUST prove safe duplicate delivery and processor re-execution, including
+   the case where the processed object exists but result publication previously failed. Applicable
+   Pub/Sub flows MUST also prove traceable routing after delivery attempts are exhausted.
 
 ## Governance
 
@@ -119,4 +156,4 @@ governance content changes. Each specification, implementation plan, task set, a
 verify compliance. Any temporary exception MUST be documented with scope, rationale, owner, and an
 expiry or removal condition; silent exceptions are prohibited.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-06
+**Version**: 1.1.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-07
