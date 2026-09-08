@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,7 @@ public class PhotoController {
     private final CurrentPhotoService service;
     private final UploadPhotoService uploads;
 
+    @Autowired
     public PhotoController(CurrentPhotoService service, UploadPhotoService uploads) {
         this.service = service;
         this.uploads = uploads;

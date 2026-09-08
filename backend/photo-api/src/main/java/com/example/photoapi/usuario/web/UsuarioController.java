@@ -12,6 +12,7 @@ import com.example.photoapi.usuario.web.contract.UserCreatedResponse;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,6 +33,7 @@ public class UsuarioController {
     private final UpdateUsuarioService updates;
     private final DeleteUsuarioService deletions;
 
+    @Autowired
     public UsuarioController(CreateUsuarioService service, UsuarioQueryService queries, UpdateUsuarioService updates,
                              DeleteUsuarioService deletions) {
         this.service = service; this.queries = queries; this.updates = updates; this.deletions = deletions;
