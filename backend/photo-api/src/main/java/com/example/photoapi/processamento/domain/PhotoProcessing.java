@@ -76,10 +76,32 @@ public class PhotoProcessing {
 
     protected PhotoProcessing() {}
 
+    public PhotoProcessing(UUID id, User user, long uploadSequence, String originalBucket,
+                           String originalObject, String originalGeneration, String originalChecksum,
+                           String contentType, String fileName) {
+        this.id = id;
+        this.user = user;
+        this.uploadSequence = uploadSequence;
+        this.status = ProcessingStatus.RECEBIDA;
+        this.originalBucket = originalBucket;
+        this.originalObject = originalObject;
+        this.originalGeneration = originalGeneration;
+        this.originalChecksum = originalChecksum;
+        this.contentType = contentType;
+        this.fileName = fileName;
+    }
+
+    public void startProcessing() {
+        if (status != ProcessingStatus.RECEBIDA) {
+            throw new IllegalStateException("Somente processamento RECEBIDA pode ser iniciado");
+        }
+        status = ProcessingStatus.PROCESSANDO;
+        processingStartedAt = LocalDateTime.now();
+    }
+
     public UUID getId() { return id; }
     public User getUser() { return user; }
     public long getUploadSequence() { return uploadSequence; }
     public ProcessingStatus getStatus() { return status; }
     public long getVersion() { return version; }
 }
-

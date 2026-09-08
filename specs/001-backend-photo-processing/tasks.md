@@ -90,23 +90,23 @@
 
 ### Tests for User Story 1
 
-- [ ] T037 [P] [US1] Criar testes unitários de trim, contagem Unicode de 2–150 caracteres e nome inválido em `backend/photo-api/src/test/java/com/example/photoapi/usuario/validation/NomeValidatorTest.java`
-- [ ] T038 [P] [US1] Criar testes unitários de tamanho, magic bytes/assinatura, decodificação válida e extensão normalizada derivada de JPG/JPEG/PNG, incluindo conteúdo corrompido com assinatura válida, exatamente 10.485.760 bytes e excesso em `backend/photo-api/src/test/java/com/example/photoapi/foto/validation/PhotoValidatorTest.java`
-- [ ] T039 [P] [US1] Criar testes HTTP para foto ausente, parte `foto` repetida, duas imagens com nomes diferentes, qualquer multipart com mais de uma parte de arquivo/imagem e matriz `201/400/413/415` em `backend/photo-api/src/test/java/com/example/photoapi/usuario/web/CreateUsuarioControllerIT.java`
-- [ ] T040 [US1] Criar teste de integração do aceite consistente sem aceite parcial entre MySQL e Storage, incluindo sequência inicial, chave determinística e limpeza/compensação simples antes da resposta HTTP em `backend/photo-api/src/test/java/com/example/photoapi/usuario/service/CreateUsuarioServiceIT.java`
+- [X] T037 [P] [US1] Criar testes unitários de trim, contagem Unicode de 2–150 caracteres e nome inválido em `backend/photo-api/src/test/java/com/example/photoapi/usuario/validation/NomeValidatorTest.java`
+- [X] T038 [P] [US1] Criar testes unitários de tamanho, magic bytes/assinatura, decodificação válida e extensão normalizada derivada de JPG/JPEG/PNG, incluindo conteúdo corrompido com assinatura válida, exatamente 10.485.760 bytes e excesso em `backend/photo-api/src/test/java/com/example/photoapi/foto/validation/PhotoValidatorTest.java`
+- [X] T039 [P] [US1] Criar testes HTTP para foto ausente, parte `foto` repetida, duas imagens com nomes diferentes, qualquer multipart com mais de uma parte de arquivo/imagem e matriz `201/400/413/415` em `backend/photo-api/src/test/java/com/example/photoapi/usuario/web/CreateUsuarioControllerIT.java`
+- [X] T040 [US1] Criar teste de integração do aceite consistente sem aceite parcial entre MySQL e Storage, incluindo sequência inicial, chave determinística e limpeza/compensação simples antes da resposta HTTP em `backend/photo-api/src/test/java/com/example/photoapi/usuario/service/CreateUsuarioServiceIT.java`
 
 ### Implementation for User Story 1
 
-- [ ] T041 [P] [US1] Implementar validação do nome por caracteres Unicode após trim em `backend/photo-api/src/main/java/com/example/photoapi/usuario/validation/NomeValidator.java`
-- [ ] T042 [P] [US1] Implementar validação pré-aceite por tamanho máximo configurável de 10.485.760 bytes, magic bytes e decodificação completa como JPG/JPEG ou PNG em `backend/photo-api/src/main/java/com/example/photoapi/foto/validation/PhotoValidator.java`
-- [ ] T043 [P] [US1] Implementar cliente do bucket original com chave `{usuarioId}/{processamentoId}/arquivo.<ext>`, extensão normalizada pelo formato validado, precondição create-only e exclusão idempotente em `backend/photo-api/src/main/java/com/example/photoapi/storage/OriginalPhotoStorage.java`
-- [ ] T044 [US1] Implementar serviço de cadastro com `usuarioId` gerado pelo banco, `processamentoId` UUID, sequência 1, transições `RECEBIDA` → `PROCESSANDO` e aceite consistente sem resposta parcial, usando limpeza/compensação simples antes do `201` quando necessária, em `backend/photo-api/src/main/java/com/example/photoapi/usuario/service/CreateUsuarioService.java`
-- [ ] T045 [US1] Implementar contagem das partes de arquivo do multipart e aceitar somente uma parte chamada `foto`, rejeitando repetição, nomes diferentes ou qualquer segunda parte de arquivo, no `POST /api/v1/usuarios` em `backend/photo-api/src/main/java/com/example/photoapi/usuario/web/UsuarioController.java`
-- [ ] T046 [US1] Mapear erros do cadastro para o modelo comum e somente `201/400/413/415/5xx` aplicáveis em `backend/photo-api/src/main/java/com/example/photoapi/exception/ApiExceptionHandler.java`
-- [ ] T047 [US1] Criar testes de timeout, retry finito/classificação e estados OPEN, HALF_OPEN e CLOSED do Circuit Breaker seletivo do Storage em `backend/photo-api/src/test/java/com/example/photoapi/storage/StorageResilienceTest.java`
-- [ ] T048 [US1] Configurar no client Storage da API os timeouts, máximo de tentativas, backoff exponencial e jitter definidos no plano, sem repetir erros funcionais/não transitórios, em `backend/photo-api/src/main/java/com/example/photoapi/config/StorageClientConfig.java`
-- [ ] T049 [US1] Integrar Resilience4j 2.4.0 somente ao Circuit Breaker síncrono do Storage da API e excluir validações/4xx de sua métrica em `backend/photo-api/pom.xml` e `backend/photo-api/src/main/java/com/example/photoapi/config/StorageResilienceConfig.java`
-- [ ] T050 [US1] Verificar a US1 executando seus testes unitários, de integração e de resiliência no módulo `backend/photo-api/`
+- [X] T041 [P] [US1] Implementar validação do nome por caracteres Unicode após trim em `backend/photo-api/src/main/java/com/example/photoapi/usuario/validation/NomeValidator.java`
+- [X] T042 [P] [US1] Implementar validação pré-aceite por tamanho máximo configurável de 10.485.760 bytes, magic bytes e decodificação completa como JPG/JPEG ou PNG em `backend/photo-api/src/main/java/com/example/photoapi/foto/validation/PhotoValidator.java`
+- [X] T043 [P] [US1] Implementar cliente do bucket original com chave `{usuarioId}/{processamentoId}/arquivo.<ext>`, extensão normalizada pelo formato validado, precondição create-only e exclusão idempotente em `backend/photo-api/src/main/java/com/example/photoapi/storage/OriginalPhotoStorage.java`
+- [X] T044 [US1] Implementar serviço de cadastro com `usuarioId` gerado pelo banco, `processamentoId` UUID, sequência 1, transições `RECEBIDA` → `PROCESSANDO` e aceite consistente sem resposta parcial, usando limpeza/compensação simples antes do `201` quando necessária, em `backend/photo-api/src/main/java/com/example/photoapi/usuario/service/CreateUsuarioService.java`
+- [X] T045 [US1] Implementar contagem das partes de arquivo do multipart e aceitar somente uma parte chamada `foto`, rejeitando repetição, nomes diferentes ou qualquer segunda parte de arquivo, no `POST /api/v1/usuarios` em `backend/photo-api/src/main/java/com/example/photoapi/usuario/web/UsuarioController.java`
+- [X] T046 [US1] Mapear erros do cadastro para o modelo comum e somente `201/400/413/415/5xx` aplicáveis em `backend/photo-api/src/main/java/com/example/photoapi/exception/ApiExceptionHandler.java`
+- [X] T047 [US1] Criar testes de timeout, retry finito/classificação e estados OPEN, HALF_OPEN e CLOSED do Circuit Breaker seletivo do Storage em `backend/photo-api/src/test/java/com/example/photoapi/storage/StorageResilienceTest.java`
+- [X] T048 [US1] Configurar no client Storage da API os timeouts, máximo de tentativas, backoff exponencial e jitter definidos no plano, sem repetir erros funcionais/não transitórios, em `backend/photo-api/src/main/java/com/example/photoapi/config/StorageClientConfig.java`
+- [X] T049 [US1] Integrar Resilience4j 2.4.0 somente ao Circuit Breaker síncrono do Storage da API e excluir validações/4xx de sua métrica em `backend/photo-api/pom.xml` e `backend/photo-api/src/main/java/com/example/photoapi/config/StorageResilienceConfig.java`
+- [X] T050 [US1] Verificar a US1 executando seus testes unitários, de integração e de resiliência no módulo `backend/photo-api/`
 
 **Checkpoint**: cadastro funciona isoladamente e nunca aceita usuário sem exatamente uma foto válida.
 
