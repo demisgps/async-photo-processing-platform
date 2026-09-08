@@ -277,8 +277,8 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 - [ ] T128 [P] Criar verificação automatizada de aderência dos endpoints implementados a `specs/001-backend-photo-processing/contracts/openapi.yaml` em `backend/photo-api/src/test/java/com/example/photoapi/contract/OpenApiContractIT.java`
 - [ ] T129 [P] Criar verificação automatizada de aderência dos eventos e ausência de bytes a `specs/001-backend-photo-processing/contracts/events.md` em `backend/photo-consumer/src/test/java/com/example/photoconsumer/processamento/event/EventContractIT.java`
 - [X] T130 Criar `postman/local.postman_environment.json` com `baseUrl`, `usuarioId` e `processamentoId`, documentando `usuarioId = response.id` no cadastro
-- [ ] T131 Criar happy path com captura automática de `response.id` em `usuarioId` e de `processamentoId` em `postman/async-photo-processing-platform.postman_collection.json`
-- [ ] T132 Completar na mesma collection a matriz negativa `400/404/409/413/415` e os sucessos `201/202/200/204`, sem manipulação manual de falhas de infraestrutura
+- [X] T131 Criar happy path com captura automática de `response.id` em `usuarioId` e de `processamentoId` em `postman/async-photo-processing-platform.postman_collection.json`
+- [X] T132 Completar na mesma collection a matriz negativa `400/404/409/413/415` e os sucessos `201/202/200/204`, sem manipulação manual de falhas de infraestrutura
 
 ### Observabilidade e health
 

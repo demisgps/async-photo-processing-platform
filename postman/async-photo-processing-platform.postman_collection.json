@@ -1,46 +1,166 @@
 {
   "info": {
     "name": "Async Photo Processing Platform - Fase 1",
+    "description": "Validação manual do backend local. Selecione o environment Local e informe os arquivos nas partes foto antes de enviar os requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Happy path",
+      "name": "01 - Caminho feliz",
+      "description": "Execute em ordem. Reenvie manualmente Consultar processamento até status PERSISTIDA antes de consultar a foto.",
       "item": [
         {
-          "name": "Cadastrar usuário com foto",
+          "name": "01 - Cadastrar usuário com foto - 201",
           "request": {
             "method": "POST",
-            "body": {"mode": "formdata", "formdata": [
-              {"key": "nome", "value": "Usuário Postman", "type": "text"},
-              {"key": "foto", "type": "file", "src": ""}
-            ]},
-            "url": "{{baseUrl}}/api/v1/usuarios"
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "nome", "value": "Usuário Postman", "type": "text"},
+                {"key": "foto", "type": "file", "src": "", "description": "Selecione uma única imagem JPG, JPEG ou PNG de até 10 MiB."}
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/usuarios",
+            "description": "Cria o usuário e inicia o processamento. usuarioId corresponde à propriedade response.id."
           },
-          "event": [{"listen": "test", "script": {"exec": [
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
             "pm.response.to.have.status(201);",
             "const body = pm.response.json();",
-            "pm.environment.set('usuarioId', body.id); // usuarioId = response.id",
-            "pm.environment.set('processamentoId', body.processamentoId);",
-            "pm.expect(body.status).to.eql('PROCESSANDO');"
+            "pm.expect(body.status).to.eql('PROCESSANDO');",
+            "pm.environment.set('usuarioId', body.id);",
+            "pm.environment.set('processamentoId', body.processamentoId);"
           ]}}]
         },
-        {"name": "Consultar processamento", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/processamentos/{{processamentoId}}"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(200);"]}}]},
-        {"name": "Consultar usuário", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(200);"]}}]},
-        {"name": "Listar usuários", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/usuarios"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(200);"]}}]},
-        {"name": "Atualizar nome", "request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"nome\":\"Nome Atualizado\"}"}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(200);"]}}]},
-        {"name": "Consultar foto atual", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/foto"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(200);", "pm.expect(['image/jpeg','image/png']).to.include(pm.response.headers.get('Content-Type'));", "pm.expect(pm.response.stream.length).to.be.above(0);"]}}]},
-        {"name": "Upload posterior", "request": {"method": "POST", "body": {"mode": "formdata", "formdata": [{"key": "foto", "type": "file", "src": ""}]}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/fotos"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(202);", "pm.environment.set('processamentoId', pm.response.json().processamentoId);"]}}]},
-        {"name": "Excluir usuário", "request": {"method": "DELETE", "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(204);"]}}]}
+        {
+          "name": "02 - Consultar processamento até PERSISTIDA - 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/processamentos/{{processamentoId}}",
+            "description": "Reenvie este request manualmente até a resposta apresentar status PERSISTIDA. Estados intermediários e terminais de erro permanecem visíveis."
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "const body = pm.response.json();",
+            "pm.expect(body.processamentoId).to.eql(pm.environment.get('processamentoId'));",
+            "console.log('Status atual do processamento:', body.status);"
+          ]}}]
+        },
+        {
+          "name": "03 - Consultar foto atual - 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/foto",
+            "description": "Execute após PERSISTIDA. Use a visualização da resposta do Postman para inspecionar manualmente a imagem processada."
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.response.to.have.status(200);",
+            "pm.expect(['image/jpeg', 'image/png']).to.include(pm.response.headers.get('Content-Type'));",
+            "pm.expect(pm.response.stream.length).to.be.above(0);"
+          ]}}]
+        },
+        {
+          "name": "04 - Listar usuários - 200",
+          "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/usuarios"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(200);"]}}]
+        },
+        {
+          "name": "05 - Consultar usuário por ID - 200",
+          "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(200);"]}}]
+        },
+        {
+          "name": "06 - Atualizar nome - 200",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Nome Atualizado\"\n}"},
+            "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(200);"]}}]
+        },
+        {
+          "name": "07 - Enviar nova foto - 202",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {"mode": "formdata", "formdata": [
+              {"key": "foto", "type": "file", "src": "", "description": "Selecione uma única imagem JPG, JPEG ou PNG de até 10 MiB."}
+            ]},
+            "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/fotos"
+          },
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": [
+            "pm.response.to.have.status(202);",
+            "const body = pm.response.json();",
+            "pm.expect(body.status).to.eql('PROCESSANDO');",
+            "pm.environment.set('processamentoId', body.processamentoId);"
+          ]}}]
+        },
+        {
+          "name": "08 - Excluir usuário - 204",
+          "request": {"method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(204);"]}}]
+        }
       ]
     },
     {
-      "name": "Matriz negativa",
+      "name": "02 - Matriz HTTP negativa",
+      "description": "Requests manuais sem manipulação de falhas de infraestrutura. Os arquivos indicados devem ser selecionados pelo operador.",
       "item": [
-        {"name": "Usuário inexistente - 404", "request": {"method": "GET", "url": "{{baseUrl}}/api/v1/usuarios/9223372036854775807"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(404);"]}}]},
-        {"name": "Nome inválido - 400", "request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"nome\":\" \"}"}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(400);"]}}]},
-        {"name": "Foto ausente - 400", "request": {"method": "POST", "body": {"mode": "formdata", "formdata": [{"key": "nome", "value": "Sem Foto", "type": "text"}]}, "url": "{{baseUrl}}/api/v1/usuarios"}, "event": [{"listen": "test", "script": {"exec": ["pm.response.to.have.status(400);"]}}]}
+        {
+          "name": "Nome inválido - 400",
+          "request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"nome\":\" \"}"}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(400);"]}}]
+        },
+        {
+          "name": "Cadastro sem foto - 400",
+          "request": {"method": "POST", "header": [], "body": {"mode": "formdata", "formdata": [{"key": "nome", "value": "Sem Foto", "type": "text"}]}, "url": "{{baseUrl}}/api/v1/usuarios"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(400);"]}}]
+        },
+        {
+          "name": "Multipart com duas imagens - 400",
+          "request": {"method": "POST", "header": [], "body": {"mode": "formdata", "formdata": [
+            {"key": "nome", "value": "Fotos Duplicadas", "type": "text"},
+            {"key": "foto", "type": "file", "src": "", "description": "Selecione uma imagem válida."},
+            {"key": "outraFoto", "type": "file", "src": "", "description": "Selecione uma segunda imagem válida."}
+          ]}, "url": "{{baseUrl}}/api/v1/usuarios"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(400);"]}}]
+        },
+        {
+          "name": "Usuário inexistente - 404",
+          "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/usuarios/9223372036854775807"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(404);"]}}]
+        },
+        {
+          "name": "Processamento inexistente - 404",
+          "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/processamentos/00000000-0000-0000-0000-000000000000"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(404);"]}}]
+        },
+        {
+          "name": "Segundo upload durante processamento ativo - 409",
+          "request": {"method": "POST", "header": [], "body": {"mode": "formdata", "formdata": [
+            {"key": "foto", "type": "file", "src": "", "description": "Execute enquanto processamentoId ainda estiver ativo."}
+          ]}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/fotos"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(409);"]}}]
+        },
+        {
+          "name": "Arquivo acima de 10 MiB - 413",
+          "request": {"method": "POST", "header": [], "body": {"mode": "formdata", "formdata": [
+            {"key": "foto", "type": "file", "src": "", "description": "Selecione manualmente um JPG ou PNG maior que 10.485.760 bytes."}
+          ]}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/fotos"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(413);"]}}]
+        },
+        {
+          "name": "Formato não suportado - 415",
+          "request": {"method": "POST", "header": [], "body": {"mode": "formdata", "formdata": [
+            {"key": "foto", "type": "file", "src": "", "description": "Selecione manualmente um arquivo cujo conteúdo não seja JPG/JPEG nem PNG."}
+          ]}, "url": "{{baseUrl}}/api/v1/usuarios/{{usuarioId}}/fotos"},
+          "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.response.to.have.status(415);"]}}]
+        }
       ]
     }
-  ]
+  ],
+  "variable": []
 }
