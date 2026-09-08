@@ -15,7 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where u.id = :id")
     Optional<User> findByIdForUpdate(@Param("id") long id);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(value = """
             UPDATE USUARIO u
             JOIN PROCESSAMENTO_FOTO candidata ON candidata.id = :processingId

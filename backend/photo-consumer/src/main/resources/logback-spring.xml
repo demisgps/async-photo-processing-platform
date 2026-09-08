@@ -1,0 +1,8 @@
+<configuration>
+  <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>{"timestamp":"%date{ISO8601}","level":"%level","service":"photo-consumer","logger":"%logger{36}","event":"%replace(%msg){'\"','\\\"'}","usuarioId":"%X{usuarioId}","processamentoId":"%X{processamentoId}","status":"%X{status}","retryAttempt":"%X{retryAttempt}","timeoutMs":"%X{timeoutMs}","circuitState":"%X{circuitState}","pubsubMessageId":"%X{pubsubMessageId}","deliveryAttempt":"%X{deliveryAttempt}","dlqTopic":"%X{dlqTopic}","errorCategory":"%X{errorCategory}","errorCode":"%X{errorCode}"}%n</pattern>
+    </encoder>
+  </appender>
+  <root level="INFO"><appender-ref ref="JSON"/></root>
+</configuration>

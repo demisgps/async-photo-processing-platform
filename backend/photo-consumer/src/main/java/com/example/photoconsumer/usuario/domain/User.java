@@ -18,8 +18,9 @@ public class User {
     @Version @Column(name = "version", nullable = false) private long version;
 
     protected User() {}
+    public User(long id, String name) { this.id=id; this.name=name; this.nextUploadSequence=2; }
     public Long getId() { return id; }
     public UUID getCurrentPhotoProcessingId() { return currentPhotoProcessingId; }
+    public long getIdValue() { return id; }
     public void promote(UUID processingId) { currentPhotoProcessingId = processingId; }
 }
-

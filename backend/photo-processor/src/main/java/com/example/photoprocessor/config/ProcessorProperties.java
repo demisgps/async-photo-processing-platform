@@ -13,7 +13,8 @@ public record ProcessorProperties(URI storageEndpoint, String originalBucket, St
                 value("PROCESSED_BUCKET", "fotos-usuarios-processadas"),
                 value("PUBSUB_PROJECT_ID", "local-photo-platform"),
                 value("PUBSUB_RESULT_TOPIC", "foto-processada"),
-                Long.parseLong(value("PHOTO_PROCESSING_MAX_PIXELS", Long.toString(DEFAULT_MAX_PIXELS))));
+                Long.parseLong(System.getProperty("photo.processing.max-pixels",
+                        value("PHOTO_PROCESSING_MAX_PIXELS", Long.toString(DEFAULT_MAX_PIXELS)))));
     }
 
     private static String value(String name, String fallback) {
@@ -21,4 +22,3 @@ public record ProcessorProperties(URI storageEndpoint, String originalBucket, St
         return value == null || value.isBlank() ? fallback : value;
     }
 }
-

@@ -104,4 +104,17 @@ public class PhotoProcessing {
     public long getUploadSequence() { return uploadSequence; }
     public ProcessingStatus getStatus() { return status; }
     public long getVersion() { return version; }
+    public String getErrorCode() { return errorCode; }
+    public String getErrorDetail() { return errorDetail; }
+    public byte[] getProcessedImage() { return processedImage == null ? null : processedImage.clone(); }
+    public String getContentType() { return contentType; }
+    public String getOriginalBucket() { return originalBucket; }
+    public String getOriginalObject() { return originalObject; }
+    public String getProcessedBucket() { return processedBucket; }
+    public String getProcessedObject() { return processedObject; }
+    public LocalDateTime getProcessingStartedAt() { return processingStartedAt; }
+    public void failProcessing(String code, String detail) {
+        if (status != ProcessingStatus.PROCESSANDO) throw new IllegalStateException("Transição inválida: " + status);
+        status = ProcessingStatus.ERRO_PROCESSAMENTO; errorCode = code; errorDetail = detail; errorAt = LocalDateTime.now();
+    }
 }
