@@ -97,6 +97,7 @@ services:
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
       PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
       PUBSUB_PROJECT_ID: local-photo-platform
+      PUBSUB_CONSUMER_ENABLED: "true"
     ports:
       - "8081:8081"
     networks: [photo-platform]
