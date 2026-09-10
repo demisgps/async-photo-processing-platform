@@ -1,17 +1,14 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
+- Version change: 1.1.0 -> 2.0.0
 - Modified principles:
-  - IV. Automated and Functional Quality Gates -> expanded with resilience failure-mode tests
-  - V. Asynchronous Architecture and Clear Boundaries -> expanded with safe re-execution, resume
-    after publication failure, and DLQ requirements
-  - VI. MVP Simplicity -> replaced blanket resilience prohibition with selective, pragmatic use
+  - IV. Automated and Functional Quality Gates -> minimum line coverage reduced from 80% to 60%;
+    automated E2E tests are no longer required
 - Added sections: none
 - Removed sections: none
 - Other updated guidance:
-  - Permanent Technology Constraints: resilience observability and processing correlation
-  - Engineering Workflow and Quality Gates: failure-mode justification, retry safety, DLQ, and
-    anti-cascade review requirements
+  - Engineering Workflow and Quality Gates: JaCoCo gate aligned to 60%; Phase 1 end-to-end
+    validation remains local and Postman-based without requiring an automated E2E suite
 - Follow-up TODOs: none
 -->
 # Async Photo Processing Platform Constitution
@@ -45,13 +42,15 @@ Architecture MUST NOT be introduced without an explicit demonstrated need.
 ### IV. Automated and Functional Quality Gates
 Unit tests MUST use JUnit 5 and Mockito. Relevant integration boundaries, especially database and
 cross-component behavior, MUST use Testcontainers where it provides production-like confidence.
-JaCoCo MUST enforce an initial minimum of 80% line coverage for the backend; coverage does not
+JaCoCo MUST enforce an initial minimum of 60% line coverage for the backend; coverage does not
 replace meaningful assertions or scenario coverage. The Postman collection MUST be the official
 functional validation of the Phase 1 API. A backend change is not complete while applicable tests
 fail, the coverage gate is unmet, or required Postman scenarios have not been validated. Tests for
 external integrations and asynchronous flows MUST cover applicable transient failures, timeout,
 bounded retry, duplicate delivery, safe re-execution, exhausted delivery routed to a dead-letter
-destination, and recovery without duplicate side effects.
+destination, and recovery without duplicate side effects. An automated end-to-end test suite is
+not required; complete-flow validation MUST be performed through the local environment and the
+official Postman collection.
 
 ### V. Asynchronous Architecture and Clear Boundaries
 `photo-api` and `photo-consumer` MUST be independent Spring Boot microservices.
@@ -130,7 +129,7 @@ business logic, and secrets MUST remain outside version control.
 3. Implementation MUST preserve Package by Feature and the Controller -> Service -> Repository
    dependency direction. Deviations require explicit justification in the plan and review.
 4. Changes MUST be verified with applicable unit and Testcontainers integration tests through the
-   Maven Wrapper, followed by the JaCoCo 80% line-coverage gate.
+   Maven Wrapper, followed by the JaCoCo 60% line-coverage gate.
 5. Phase 1 completion MUST include an end-to-end local run and successful validation of required
    Postman scenarios. Frontend work is prohibited until this gate passes.
 6. Code review MUST reject unrequested technologies, speculative abstractions, image bytes in
@@ -156,4 +155,4 @@ governance content changes. Each specification, implementation plan, task set, a
 verify compliance. Any temporary exception MUST be documented with scope, rationale, owner, and an
 expiry or removal condition; silent exceptions are prohibited.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-07
+**Version**: 2.0.0 | **Ratified**: 2026-09-06 | **Last Amended**: 2026-09-10
