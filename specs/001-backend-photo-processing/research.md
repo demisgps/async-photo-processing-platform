@@ -40,7 +40,13 @@ stateless e sem MySQL. O dispatcher evita que a resposta HTTP espere processamen
 
 **Alternatives considered**: Acionamento direto pela API cria acoplamento e janela de perda;
 depender de notificações experimentais do fake-gcs-server sem smoke test é frágil; polling é
-fallback do dispatcher, com watermark e dedupe.
+fallback do dispatcher, com dedupe persistente por versão do objeto. O dedupe reduz duplicatas,
+mas mantém semântica at-least-once: uma resposta HTTP perdida ainda pode causar nova entrega, que
+deve ser absorvida pela idempotência do processor. A consulta de polling possui timeout próprio,
+configurável por `STORAGE_TIMEOUT_SECONDS`, e falhas de consulta não substituem o inventário por
+uma resposta parcial nem alteram o estado das entregas. O dispatcher local executa como instância
+única por diretório de estado; sua limpeza de claims abandonados não é coordenação distribuída e
+não suporta múltiplas instâncias compartilhando `STATE_DIR`.
 
 **Sources**: [Functions Framework Java](https://github.com/GoogleCloudPlatform/functions-framework-java),
 [Function triggers](https://docs.cloud.google.com/run/docs/function-triggers),

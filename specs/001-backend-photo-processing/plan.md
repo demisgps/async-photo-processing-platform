@@ -246,13 +246,24 @@ Local:
 
 ```text
 photo-api -> fake-gcs-server/original
-          -> storage-event-dispatcher (assíncrono, dedupe bucket+objeto+generation)
+          -> storage-event-dispatcher (assíncrono, claim atômico e dedupe persistente
+             por bucket+objeto+generation, sem filtro temporal)
           -> Functions Framework/photo-processor
           -> fake-gcs-server/processadas
           -> Pub/Sub Emulator
           -> photo-consumer
           -> MySQL 8.4
 ```
+
+O dispatcher permite entregas concorrentes de objetos diferentes. Claims temporários abandonados
+são limpos na inicialização; sucesso promove atomicamente o claim para um marcador persistente, e
+falha libera o claim para o próximo polling. Isso reduz duplicatas locais, sem prometer exactly-once:
+se o processor concluir e a resposta HTTP se perder, uma nova tentativa ainda é possível e depende
+da idempotência do processor. A listagem do bucket usa o timeout configurável
+`STORAGE_TIMEOUT_SECONDS` (5 segundos por padrão); falha ou resposta inválida é registrada e o
+polling prossegue no ciclo seguinte sem alterar claims. O volume `STATE_DIR` pertence a exatamente
+uma instância do dispatcher local: a limpeza global de claims no startup e shutdown não oferece
+coordenação segura entre múltiplas instâncias compartilhando o mesmo diretório.
 
 GCP:
 
