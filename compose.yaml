@@ -134,6 +134,7 @@ services:
       FUNCTIONS_ENDPOINT: http://photo-processor:8080
       POLL_INTERVAL_SECONDS: "2"
       DELIVERY_TIMEOUT_SECONDS: "5"
+      STORAGE_TIMEOUT_SECONDS: "5"
       STATE_DIR: /state
     volumes:
       - dispatcher-state:/state
