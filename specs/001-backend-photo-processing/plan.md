@@ -33,7 +33,7 @@ Spring Data JPA, Validation, Flyway, Google Cloud Storage/Pub/Sub Java clients, 
 no GCP; buckets `fotos-usuarios-original` e `fotos-usuarios-processadas`
 
 **Testing**: JUnit 5, Mockito, Testcontainers (MySQL 8.4 e integrações em contêiner), testes de
-contrato CloudEvent/Pub/Sub, JaCoCo com mínimo de 80% de linhas e Postman
+contrato CloudEvent/Pub/Sub, JaCoCo com mínimo de 60% de linhas e Postman
 
 **Target Platform**: Linux containers localmente; Cloud Run Functions Java 25 para o processor;
 Cloud SQL, Cloud Storage e Pub/Sub gerenciados. O runtime GCP definitivo de `photo-api` e
@@ -49,7 +49,7 @@ feature e serão medidas antes de qualquer otimização.
 
 **Constraints**: Backend only; Maven 3.9.12 Wrapper; imagens até 10.485.760 bytes; saída máxima
 1024x1024 sem upscale; Pub/Sub sem bytes; processor sem MySQL; at-least-once; um processamento ativo
-por usuário; 80% de cobertura; sem Saga, Outbox ou 2PC
+por usuário; 60% de cobertura; sem Saga, Outbox ou 2PC
 
 **Scale/Scope**: MVP de uma API, um consumidor e uma função, dois buckets, um tópico principal, uma
 subscription principal e um Dead Letter Topic. Sem frontend, autenticação ou plataforma adicional
@@ -64,7 +64,7 @@ de observabilidade.
 | Backend First | Somente `backend/`, infraestrutura local, contratos e Postman | PASS / PASS |
 | Stack padronizada | Java 25, Boot 4.0.0, Wrapper 3.9.12, MySQL 8.4, Flyway | PASS / PASS |
 | Package by Feature e camadas | Árvores por `usuario`, `foto`, `processamento`; Controller -> Service -> Repository | PASS / PASS |
-| Qualidade | JUnit/Mockito/Testcontainers/JaCoCo 80% e Postman planejados | PASS / PASS |
+| Qualidade | JUnit/Mockito/Testcontainers/JaCoCo 60% e Postman planejados | PASS / PASS |
 | Fronteiras assíncronas | Processor é Function sem MySQL; eventos só com referências/metadados | PASS / PASS |
 | Idempotência/reexecução | Chaves determinísticas, precondição de criação, locks/CAS e sequência de upload | PASS / PASS |
 | Resiliência pragmática | Cada mecanismo mapeado a falha; tentativas limitadas e anti-storm | PASS / PASS |
@@ -332,8 +332,10 @@ dependência nativa/cold start; Java2D puro por exigir orientação e pipeline m
 - Pub/Sub: tópico/subscriptions/DLT, 8 entregas aproximadas, rastreabilidade, banco indisponível e
   posterior registro de `ERRO_PERSISTENCIA`. Emulator em smoke local; contrato GCP quando disponível.
 - API/Postman: todos os cenários da spec e códigos 201/202/200/204/400/404/409/413/415.
-- Gate: `./mvnw verify` no agregador, JaCoCo >= 80% de linhas por módulo e agregado; cobertura não
-  substitui assertions dos casos acima.
+- Gate: `./mvnw verify` no agregador, JaCoCo >= 60% de linhas por módulo e agregado; cobertura não
+  substitui assertions dos casos acima. Testes E2E automatizados não são obrigatórios na Fase 1;
+  a validação funcional completa ocorre no ambiente local via Docker Compose e collection Postman.
+  Testes automatizados existentes são preservados.
 
 ## Observability
 

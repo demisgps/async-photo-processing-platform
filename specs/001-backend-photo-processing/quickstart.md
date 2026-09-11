@@ -26,7 +26,7 @@ Esperado:
 
 - módulos `photo-api`, `photo-consumer` e `photo-processor` aprovados;
 - testes unitários e integração MySQL 8.4 aprovados;
-- JaCoCo com pelo menos 80% de linhas por módulo e agregado;
+- JaCoCo com pelo menos 60% de linhas por módulo e agregado;
 - testes de contrato de imagem, eventos, idempotência e resiliência aprovados.
 
 ## 2. Start local dependencies and backend

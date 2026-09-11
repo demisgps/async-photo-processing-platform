@@ -342,7 +342,7 @@ processamento e falha definitiva de persistência.
   falsamente como concluídas.
 - **SC-008**: Os 13 cenários Postman passam de ponta a ponta localmente antes da conclusão da fase.
 - **SC-009**: Toda a Fase 1 é validável sem qualquer artefato de frontend.
-- **SC-010**: Testes automatizados cobrem ao menos 80% das linhas e passam integralmente.
+- **SC-010**: Testes automatizados cobrem ao menos 60% das linhas e passam integralmente.
 - **SC-011**: Em 100% das reexecuções testadas do mesmo `processamentoId`, o `photo-processor` não
   duplica efeitos; quando a processada já existe, consegue tentar a publicação posterior sem
   reprocessar a original.

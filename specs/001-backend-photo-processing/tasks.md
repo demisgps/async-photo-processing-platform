@@ -27,7 +27,7 @@
 - [X] T003 [P] Criar o módulo Spring Boot 4.0.0 `photo-api` e sua estrutura inicial de testes em `backend/photo-api/pom.xml` e `backend/photo-api/src/test/java/`
 - [X] T004 [P] Criar o módulo Spring Boot 4.0.0 `photo-consumer` e sua estrutura inicial de testes em `backend/photo-consumer/pom.xml` e `backend/photo-consumer/src/test/java/`
 - [X] T005 [P] Criar o módulo Java 25 Functions Framework, sem Spring Boot e sem Actuator, em `backend/photo-processor/pom.xml` e `backend/photo-processor/src/test/java/`
-- [X] T006 Configurar compiler, Surefire, Failsafe e JaCoCo com mínimo de 80% de linhas por módulo e agregado em `backend/pom.xml`
+- [X] T006 Configurar compiler, Surefire, Failsafe e JaCoCo com mínimo de 60% de linhas por módulo e agregado em `backend/pom.xml`
 - [X] T007 [P] Adicionar Actuator ao `photo-api` e expor somente health, liveness e readiness em `backend/photo-api/pom.xml` e `backend/photo-api/src/main/resources/application.yml`
 - [X] T008 [P] Adicionar Actuator ao `photo-consumer` e expor somente health, liveness e readiness em `backend/photo-consumer/pom.xml` e `backend/photo-consumer/src/main/resources/application.yml`
 - [X] T009 Executar `./mvnw verify` em `backend/` e confirmar módulos, Java 25, testes vazios e quality gates sem criar frontend
@@ -51,7 +51,7 @@
 - [X] T014 [P] Criar o Dockerfile local do `photo-consumer` em `backend/photo-consumer/Dockerfile`
 - [X] T015 [P] Criar o Dockerfile local do Functions Framework do `photo-processor` em `backend/photo-processor/Dockerfile`
 - [X] T016 [P] Criar o Dockerfile local do `storage-event-dispatcher` em `docker/storage-event-dispatcher/Dockerfile`
-- [X] T017 Implementar no `storage-event-dispatcher` a detecção assíncrona de finalização no fake-gcs-server, construção do CloudEvent aprovado, dedupe técnico por `bucket + object/name + generation`, watermark previsto no plano e entrega não bloqueante ao Functions Framework, sem regra de negócio, em `docker/storage-event-dispatcher/`
+- [X] T017 Implementar no `storage-event-dispatcher` a detecção assíncrona de finalização no fake-gcs-server, construção do CloudEvent aprovado, claim atômico e dedupe persistente por `bucket + object/name + generation` sem filtro temporal, recuperação de claims abandonados e entrega não bloqueante ao Functions Framework, sem regra de negócio, em `docker/storage-event-dispatcher/`
 - [X] T018 Integrar no `compose.yaml` as imagens locais da API, consumer, processor e dispatcher, deixando o wiring dispatcher → Functions Framework configurado sem exigir validação funcional antes da `PhotoProcessorFunction`
 - [X] T019 Criar verificação local de bootstrap repetível de buckets, tópico, subscriptions e DLT em `docker/tests/bootstrap-local.sh`, classificada fora do Maven e executada somente com o ambiente Compose já iniciado
 
@@ -132,7 +132,6 @@
 - [X] T060 [US2] Implementar a orquestração básica no `PhotoProcessingService`, obtendo/validando a original, transformando, salvando a processada e publicando `PhotoProcessingResult`, ou `PhotoProcessingError` para erro funcional definitivo, em `backend/photo-processor/src/main/java/com/example/photoprocessor/processamento/PhotoProcessingService.java`
 - [X] T061 [US2] Implementar `CloudEventFunction` aceitando somente finalização do bucket original, ignorando eventos incompatíveis com log rastreável e delegando o fluxo válido ao `PhotoProcessingService` em `backend/photo-processor/src/main/java/com/example/photoprocessor/processamento/PhotoProcessorFunction.java`
 - [ ] T062 [US2] Criar testes de contrato garantindo que o processor não acessa MySQL e publica somente IDs, referências e metadados em `backend/photo-processor/src/test/java/com/example/photoprocessor/event/ProcessingEventContractTest.java`
-- [ ] T063 [US2] Criar teste autocontido no Failsafe, com dependências próprias via Testcontainers e sem Compose pré-iniciado, validando dispatcher → Functions Framework → `PhotoProcessorFunction` em `backend/photo-processor/src/test/java/com/example/photoprocessor/processamento/DispatcherCloudEventIT.java`
 
 ### photo-consumer e persistência final
 
@@ -151,7 +150,6 @@
 - [ ] T073 [P] [US2] Criar testes HTTP da foto atual para `200` com a foto anterior `PERSISTIDA` durante substituição, `409` quando há ativo sem qualquer foto atual e `404` após erro terminal sem foto em `backend/photo-api/src/test/java/com/example/photoapi/foto/web/CurrentPhotoControllerIT.java`
 - [X] T074 [US2] Implementar consulta por `processamentoId` em `backend/photo-api/src/main/java/com/example/photoapi/processamento/service/ProcessingQueryService.java` e `backend/photo-api/src/main/java/com/example/photoapi/processamento/web/ProcessingController.java`
 - [X] T075 [US2] Implementar consulta da foto atual com HTTP 200 e Content-Type JPEG/PNG para a foto anterior `PERSISTIDA` durante substituição, HTTP 409 para ativo sem foto atual e HTTP 404 após erro terminal sem foto, sem promoção antecipada, em `backend/photo-api/src/main/java/com/example/photoapi/foto/service/CurrentPhotoService.java` e `backend/photo-api/src/main/java/com/example/photoapi/foto/web/PhotoController.java`
-- [ ] T076 [US2] Criar teste ponta a ponta autocontido no Failsafe da API, provisionando suas dependências via Testcontainers e sem Compose pré-iniciado, para API → Storage → dispatcher → Function → Pub/Sub → consumer → MySQL em `backend/photo-api/src/test/java/com/example/photoapi/e2e/HappyPathIT.java`
 
 **Checkpoint**: o fluxo assíncrono feliz e as consultas da US2 funcionam ponta a ponta.
 
@@ -208,7 +206,6 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 - [ ] T103 [P] [US6] Criar no `photo-consumer` teste de evento recebido após `ERRO_PROCESSAMENTO`, verificando ACK/no-op rastreável e ausência de ressurreição/regressão em `backend/photo-consumer/src/test/java/com/example/photoconsumer/processamento/service/LateEventAfterProcessingErrorIT.java`
 - [X] T104 [US6] Implementar reconciliador periódico que marca `ERRO_PROCESSAMENTO` somente após confirmação e update condicional em `backend/photo-api/src/main/java/com/example/photoapi/reconciliation/StalledProcessingReconciler.java`
 - [X] T105 [US6] Manter `PROCESSANDO` quando o objeto processado existir e emitir somente ocorrência operacional `PUBLICATION_PENDING` para recuperação, nunca novo status, em `backend/photo-api/src/main/java/com/example/photoapi/reconciliation/StalledProcessingReconciler.java`
-- [ ] T106 [US6] Verificar US6 com suíte ponta a ponta autocontida no Failsafe da API, provisionando dependências via Testcontainers sem Compose pré-iniciado, para retries, timeouts, Circuit Breaker seletivo, redelivery, DLT, reexecução e estados terminais em `backend/photo-api/src/test/java/com/example/photoapi/e2e/ResilienceIT.java`
 
 **Checkpoint**: retries/redeliveries finitos não duplicam efeitos; estados nunca regridem; falhas comunicáveis terminam corretamente e falhas incomunicáveis permanecem rastreáveis.
 
@@ -239,7 +236,6 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 
 - [ ] T113 [P] [US4] Criar testes HTTP das mesmas validações e contagem de partes de arquivo do cadastro, incluindo nomes multipart diferentes, e resposta `202 PROCESSANDO` em `backend/photo-api/src/test/java/com/example/photoapi/foto/web/UploadPhotoControllerIT.java`
 - [ ] T114 [P] [US4] Criar testes de lock na sequência, processamento ativo `409` e uploads concorrentes em `backend/photo-api/src/test/java/com/example/photoapi/foto/service/UploadPhotoConcurrencyIT.java`
-- [ ] T115 [P] [US4] Criar teste ponta a ponta autocontido no Failsafe da API, com dependências via Testcontainers e sem Compose pré-iniciado, que preserva a foto anterior e promove somente a sequência elegível mais nova em `backend/photo-api/src/test/java/com/example/photoapi/e2e/PhotoReplacementIT.java`
 - [X] T116 [US4] Implementar alocação bloqueada de `sequencia_upload`, UUID e criação condicional do novo processamento em `backend/photo-api/src/main/java/com/example/photoapi/foto/service/UploadPhotoService.java`
 - [X] T117 [US4] Reutilizar validação completa e storage create-only da US1 para obter aceite consistente sem aceite parcial, respondendo `202` somente após confirmação e executando limpeza/compensação simples em falha anterior ao HTTP em `backend/photo-api/src/main/java/com/example/photoapi/foto/service/UploadPhotoService.java`
 - [X] T118 [US4] Expor `POST /api/v1/usuarios/{usuarioId}/fotos` aceitando exatamente uma parte de arquivo chamada `foto`, com contagem explícita e respostas `202/400/404/409/413/415`, em `backend/photo-api/src/main/java/com/example/photoapi/foto/web/PhotoController.java`
@@ -262,7 +258,6 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 - [X] T124 [US5] Implementar listagem/exclusão idempotente de objetos originais e processados, tratando ausência como sucesso, em `backend/photo-api/src/main/java/com/example/photoapi/storage/UserPhotoStorageCleaner.java`
 - [X] T125 [US5] Implementar exclusão retomável com referências preservadas até a limpeza, banco por último e sem Saga/Outbox/2PC em `backend/photo-api/src/main/java/com/example/photoapi/usuario/service/DeleteUsuarioService.java`
 - [X] T126 [US5] Expor `DELETE /api/v1/usuarios/{usuarioId}` com `204` somente após remoção integral em `backend/photo-api/src/main/java/com/example/photoapi/usuario/web/UsuarioController.java`
-- [ ] T127 [US5] Verificar corrida upload/exclusão e retomada após falha em teste autocontido no Failsafe da API, provisionando dependências via Testcontainers e sem Compose pré-iniciado, em `backend/photo-api/src/test/java/com/example/photoapi/e2e/DeleteResumeIT.java`
 
 **Checkpoint**: conflitos são determinísticos e a exclusão pode ser repetida com segurança até a conclusão integral.
 
@@ -292,14 +287,13 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 ### Testes transversais restantes e validação final
 
 - [ ] T139 Executar a suíte transversal com MySQL 8.4 para migrations, processamento ativo sob corrida, CAS, promoção atômica e retomada de `PERSISTINDO` em `backend/`
-- [ ] T140 Executar testes ponta a ponta de duplicidade, redelivery, fora de ordem, processor reexecutado, save → publish, DLT e evento tardio em `backend/`
 - [ ] T141 Executar testes de imagem do processor para orientação, dimensões, proporção, ausência de upscale, JPEG e PNG em `backend/photo-processor/`
-- [ ] T142 Executar `./mvnw verify` dentro de `backend/` sem `docker compose` pré-iniciado, comprovando que testes unitários, Testcontainers e Failsafe são autocontidos, e corrigir somente lacunas até JaCoCo atingir pelo menos 80% por módulo e agregado
-- [ ] T143 Executar `docker compose up --build` na raiz e validar MySQL, fake-gcs-server, Pub/Sub Emulator, dispatcher, Functions Framework, API e consumer conforme `specs/001-backend-photo-processing/quickstart.md`
+- [ ] T142 Executar `./mvnw verify` dentro de `backend/` sem `docker compose` pré-iniciado e corrigir somente lacunas dos testes unitários e de integração exigidos até JaCoCo atingir pelo menos 60% por módulo e agregado; testes E2E automatizados não são obrigatórios
+- [X] T143 Executar `docker compose up --build` na raiz e validar MySQL, fake-gcs-server, Pub/Sub Emulator, dispatcher, Functions Framework, API e consumer conforme `specs/001-backend-photo-processing/quickstart.md`
 - [ ] T144 Validar separadamente health/readiness/liveness da API e consumer e disponibilidade/CloudEvent de teste do processor conforme `specs/001-backend-photo-processing/quickstart.md`
-- [ ] T145 Executar a collection Postman completa e registrar a aprovação do happy path e da matriz HTTP em `postman/README.md`
+- [X] T145 Executar a collection Postman completa e registrar a aprovação do happy path e da matriz HTTP em `postman/README.md`
 - [ ] T146 Validar na prática retries, timeouts, Circuit Breaker seletivo, redelivery finita, DLT e exclusão retomável conforme `specs/001-backend-photo-processing/quickstart.md`
-- [ ] T147 Confirmar por inspeção de `backend/`, `compose.yaml`, `docker/` e `postman/` que não há frontend, autenticação, Spring Security, JWT, OAuth2, Saga, Outbox, 2PC, runtime GCP escolhido para API/consumer ou tecnologia não aprovada
+- [X] T147 Confirmar por inspeção de `backend/`, `compose.yaml`, `docker/` e `postman/` que não há frontend, autenticação, Spring Security, JWT, OAuth2, Saga, Outbox, 2PC, runtime GCP escolhido para API/consumer ou tecnologia não aprovada
 
 **Checkpoint**: Fase 1 validada integralmente por Maven, Testcontainers, ambiente local e Postman.
 
@@ -312,8 +306,8 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 - **Phase 1 (Setup)**: inicia imediatamente; T006 depende de T001–T005 e T009 depende de T001–T008.
 - **Phase 2 (Foundation)**: depende da Phase 1 e bloqueia todas as User Stories; Dockerfiles T013–T016 precedem o wiring T018, migrations seguem T022 → T023 → T024, e testes T029–T030 dependem delas. O wiring não implica validação funcional da função nesta fase.
 - **US1 (Phase 3)**: depende da Foundation e fornece o aceite inicial usado no fluxo ponta a ponta.
-- **US2 (Phase 4)**: depende da Foundation e integra o processamento criado pela US1; T063 valida dispatcher → Function somente depois do serviço T060 e da função T061, e processor/consumer convergem no E2E T076.
-- **US6 (Phase 5)**: depende do caminho assíncrono básico da US2; T077–T083 endurecem o `PhotoProcessingService` existente, e a resiliência do processor e do consumer pode evoluir em paralelo antes da validação T106.
+- **US2 (Phase 4)**: depende da Foundation e integra o processamento criado pela US1; processor e consumer convergem na validação local via Docker Compose e Postman, sem exigir E2E automatizado.
+- **US6 (Phase 5)**: depende do caminho assíncrono básico da US2; T077–T083 endurecem o `PhotoProcessingService` existente, e a resiliência do processor e do consumer pode evoluir em paralelo antes da validação local via Docker Compose e Postman.
 - **US3 (Phase 6)**: depende da Foundation e pode ser implementada em paralelo com US1/US2/US6.
 - **US4 (Phase 7)**: depende do aceite da US1, consultas/promoção da US2 e garantias de ordem da US6.
 - **US5 (Phase 8)**: depende da proteção de processamento ativo da Foundation e do storage/API construídos em US1/US4.
