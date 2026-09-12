@@ -1,6 +1,7 @@
 package com.example.photoprocessor.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -47,5 +48,34 @@ class PhotoStorageTest {
         var properties = new ProcessorProperties(URI.create("http://localhost:4443"), "original", "processed", "p", "t", 10);
         when(client.get("processed", "key")).thenReturn(mock(Blob.class));
         assertThat(new PhotoStorage(client, properties).exists("processed", "key")).isTrue();
+    }
+
+    @Test void createOnlyRaceReusesOnlyMatchingMetadata() {
+        Storage client = mock(Storage.class);
+        var properties = new ProcessorProperties(URI.create("http://localhost:4443"), "original", "processed", "p", "t", 10);
+        var storage = new PhotoStorage(client, properties);
+        UUID id = UUID.randomUUID();
+        var original = new StorageObjectReference("original", "4/" + id + "/arquivo.jpg", "7");
+        var image = new TransformedImage(new byte[] {9}, "image/jpeg", "jpg", 1, 1, "sum");
+        String name = "4/" + id + "/arquivo.jpg";
+        Blob existing = mock(Blob.class);
+        when(client.create(any(BlobInfo.class), any(byte[].class), any(Storage.BlobTargetOption.class)))
+                .thenThrow(new com.google.cloud.storage.StorageException(412, "already exists"));
+        when(client.get("processed", name)).thenReturn(existing);
+        when(existing.getBucket()).thenReturn("processed");
+        when(existing.getName()).thenReturn(name);
+        when(existing.getGeneration()).thenReturn(8L);
+        when(existing.getContentType()).thenReturn("image/jpeg");
+        when(existing.getSize()).thenReturn(1L);
+        when(existing.getMetadata()).thenReturn(Map.of("usuarioId", "4", "processamentoId", id.toString(),
+                "originalBucket", "original", "originalName", original.name(), "originalGeneration", "7",
+                "checksum", "sum", "width", "1", "height", "1"));
+
+        assertThat(storage.save(4, id, image, original).generation()).isEqualTo("8");
+
+        when(existing.getMetadata()).thenReturn(Map.of("usuarioId", "4", "processamentoId", id.toString(),
+                "originalBucket", "original", "originalName", original.name(), "originalGeneration", "different"));
+        assertThatThrownBy(() -> storage.save(4, id, image, original))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("incompatível");
     }
 }
