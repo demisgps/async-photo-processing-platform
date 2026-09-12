@@ -14,6 +14,7 @@ import com.google.pubsub.v1.PubsubMessage;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.PessimisticLockingFailureException;
 
 class PhotoResultSubscriberTest {
     @Test
@@ -47,6 +48,20 @@ class PhotoResultSubscriberTest {
         new PhotoResultSubscriber(new PubSubProperties("p", "s", "d", false), finalizer, errors).receive(message(json), ack);
         verify(errors).handle(any());
         verify(ack).ack();
+    }
+
+    @Test
+    void nacksTransientDatabaseFailureForBrokerRedelivery() {
+        var finalizer = mock(FinalizeProcessingService.class);
+        var errors = mock(ProcessingErrorService.class);
+        var ack = mock(AckReplyConsumer.class);
+        org.mockito.Mockito.when(finalizer.handle(any()))
+                .thenThrow(new PessimisticLockingFailureException("database unavailable"));
+
+        new PhotoResultSubscriber(new PubSubProperties("p", "s", "d", false), finalizer, errors)
+                .receive(message(validResult()), ack);
+
+        verify(ack).nack();
     }
 
     private String validResult() {
