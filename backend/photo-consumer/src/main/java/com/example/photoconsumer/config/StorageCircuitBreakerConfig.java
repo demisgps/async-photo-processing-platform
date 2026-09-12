@@ -14,10 +14,18 @@ public class StorageCircuitBreakerConfig {
                 .slidingWindowSize(20).minimumNumberOfCalls(10).waitDurationInOpenState(Duration.ofSeconds(15))
                 .permittedNumberOfCallsInHalfOpenState(3).recordException(this::transientFailure).build());
     }
-    private boolean transientFailure(Throwable failure) {
-        if (failure instanceof com.google.cloud.storage.StorageException storage) {
-            return storage.getCode() == 408 || storage.getCode() == 429 || storage.getCode() >= 500;
+    boolean transientFailure(Throwable failure) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            if (current instanceof com.google.cloud.storage.StorageException storage) {
+                int code = storage.getCode();
+                if (code == 408 || code == 429 || code >= 500) return true;
+            }
+            if (current instanceof java.net.SocketException
+                    || current instanceof java.net.UnknownHostException
+                    || current instanceof java.util.concurrent.TimeoutException) {
+                return true;
+            }
         }
-        return failure instanceof java.net.SocketTimeoutException || failure instanceof java.util.concurrent.TimeoutException;
+        return false;
     }
 }

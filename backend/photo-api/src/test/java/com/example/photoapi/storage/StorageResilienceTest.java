@@ -9,8 +9,10 @@ import com.example.photoapi.config.StorageResilienceConfig;
 import com.google.cloud.storage.StorageException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import java.net.ConnectException;
 import java.net.URI;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class StorageResilienceTest {
@@ -28,11 +30,17 @@ class StorageResilienceTest {
 
     @Test void circuitTransitionsOpenHalfOpenAndClosed() {
         CircuitBreaker circuit = new StorageResilienceConfig().storageCircuitBreakerRegistry().circuitBreaker("test");
+        AtomicInteger dependencyCalls = new AtomicInteger();
         for (int i = 0; i < 10; i++) {
-            assertThatThrownBy(() -> circuit.executeRunnable(() -> { throw new StorageException(503, "down"); }));
+            assertThatThrownBy(() -> circuit.executeRunnable(() -> {
+                dependencyCalls.incrementAndGet();
+                throw new StorageException(0, "connection refused", new ConnectException("connection refused"));
+            }));
         }
         assertThat(circuit.getState()).isEqualTo(CircuitBreaker.State.OPEN);
-        assertThatThrownBy(() -> circuit.executeRunnable(() -> {})).isInstanceOf(CallNotPermittedException.class);
+        assertThatThrownBy(() -> circuit.executeRunnable(dependencyCalls::incrementAndGet))
+                .isInstanceOf(CallNotPermittedException.class);
+        assertThat(dependencyCalls).hasValue(10);
         circuit.transitionToHalfOpenState();
         for (int i = 0; i < 3; i++) circuit.executeRunnable(() -> {});
         assertThat(circuit.getState()).isEqualTo(CircuitBreaker.State.CLOSED);
