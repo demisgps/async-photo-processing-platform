@@ -23,17 +23,18 @@ class FinalizeProcessingIT extends MySqlIntegrationSupport {
         var users = context.getBean(UserRepository.class);
         var entityManager = context.getBean(EntityManager.class);
         var storage = context.getBean(ProcessedPhotoStorage.class);
-        User user = users.saveAndFlush(new User(1, "Ana"));
+        long userId = uniqueUserId();
+        User user = users.saveAndFlush(new User(userId, "Ana"));
         UUID id = UUID.randomUUID();
         processings.saveAndFlush(new PhotoProcessing(id, user, 1, ProcessingStatus.PROCESSANDO));
-        PhotoProcessingResult event = result(id, 1);
+        PhotoProcessingResult event = result(id, userId);
         when(storage.download(event.processedObject())).thenReturn(new byte[] {7});
         assertThat(service.handle(event)).isEqualTo(FinalizeProcessingService.Outcome.COMMITTED);
         entityManager.clear();
         PhotoProcessing persisted = processings.findById(id).orElseThrow();
         assertThat(persisted.getStatus()).isEqualTo(ProcessingStatus.PERSISTIDA);
         assertThat(persisted.getProcessedImage()).containsExactly(7);
-        assertThat(users.findById(1L).orElseThrow().getCurrentPhotoProcessingId()).isEqualTo(id);
+        assertThat(users.findById(userId).orElseThrow().getCurrentPhotoProcessingId()).isEqualTo(id);
     }
 
     static PhotoProcessingResult result(UUID id, long userId) {

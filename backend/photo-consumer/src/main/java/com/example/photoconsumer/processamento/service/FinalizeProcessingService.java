@@ -40,7 +40,23 @@ public class FinalizeProcessingService {
             var user = users.findByIdForUpdate(event.usuarioId()).orElseThrow();
             if (processing.getUser().getIdValue() != user.getIdValue()) throw new IllegalArgumentException("processamento não pertence ao usuário");
             if (users.promoteIfEligibleAndNewer(user.getIdValue(), processing.getId()) != 1) {
-                throw new IllegalStateException("foto não elegível para promoção");
+                var currentPhotoId = user.getCurrentPhotoProcessingId();
+                if (processing.getId().equals(currentPhotoId)) {
+                    // A promoção já foi confirmada por uma entrega anterior. A retomada
+                    // completa a mesma linha de processamento sem promover novamente.
+                } else if (currentPhotoId != null) {
+                    var current = processings.findById(currentPhotoId)
+                            .orElseThrow(() -> new IllegalStateException("foto atual inexistente"));
+                    if (current.getUser().getIdValue() != user.getIdValue()) {
+                        throw new IllegalStateException("foto atual pertence a outro usuário");
+                    }
+                    if (current.getUploadSequence() > processing.getUploadSequence()) {
+                        return Outcome.NO_OP;
+                    }
+                    throw new IllegalStateException("foto não elegível para promoção");
+                } else {
+                    throw new IllegalStateException("foto não elegível para promoção");
+                }
             }
             var ref = event.processedObject();
             processing.persist(image, ref.bucket(), ref.name(), ref.generation(), ref.checksum(), ref.contentType(), ref.width(), ref.height());

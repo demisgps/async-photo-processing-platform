@@ -1,7 +1,6 @@
 package com.example.photoconsumer.processamento.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.example.photoconsumer.persistence.MySqlIntegrationSupport;
@@ -21,21 +20,27 @@ class PromotionAtomicityIT extends MySqlIntegrationSupport {
         var users = context.getBean(UserRepository.class);
         var entityManager = context.getBean(EntityManager.class);
         var storage = context.getBean(ProcessedPhotoStorage.class);
-        User user = users.saveAndFlush(new User(3, "Ana"));
+        long userId = uniqueUserId();
+        User user = users.saveAndFlush(new User(userId, "Ana"));
         UUID currentId = UUID.randomUUID();
         PhotoProcessing current = new PhotoProcessing(currentId, user, 2, ProcessingStatus.PROCESSANDO);
         current.markProcessed(); current.startPersistence();
-        current.persist(new byte[] {9}, "processed", "3/" + currentId + "/arquivo.jpg", "1", "sum",
+        current.persist(new byte[] {9}, "processed", userId + "/" + currentId + "/arquivo.jpg", "1", "sum",
                 "image/jpeg", 1, 1);
         processings.saveAndFlush(current);
         user.promote(currentId); users.saveAndFlush(user);
         UUID candidateId = UUID.randomUUID();
         processings.saveAndFlush(new PhotoProcessing(candidateId, user, 1, ProcessingStatus.PROCESSANDO));
-        var event = FinalizeProcessingIT.result(candidateId, 3);
+        var event = FinalizeProcessingIT.result(candidateId, userId);
         when(storage.download(event.processedObject())).thenReturn(new byte[] {1});
-        assertThatThrownBy(() -> service.handle(event)).isInstanceOf(IllegalStateException.class);
+        long processingCount = processings.count();
+
+        assertThat(service.handle(event)).isEqualTo(FinalizeProcessingService.Outcome.NO_OP);
+
         entityManager.clear();
         assertThat(processings.findById(candidateId).orElseThrow().getStatus()).isEqualTo(ProcessingStatus.PERSISTINDO);
-        assertThat(users.findById(3L).orElseThrow().getCurrentPhotoProcessingId()).isEqualTo(currentId);
+        assertThat(processings.findById(candidateId).orElseThrow().getProcessedImage()).isNull();
+        assertThat(users.findById(userId).orElseThrow().getCurrentPhotoProcessingId()).isEqualTo(currentId);
+        assertThat(processings.count()).isEqualTo(processingCount);
     }
 }

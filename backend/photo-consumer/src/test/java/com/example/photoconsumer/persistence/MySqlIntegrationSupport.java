@@ -16,12 +16,16 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.containers.MySQLContainer;
+import java.util.concurrent.atomic.AtomicLong;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class MySqlIntegrationSupport {
+    private static final AtomicLong USER_IDS = new AtomicLong(1_000_000);
     private static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.4")
             .withDatabaseName("photo_platform").withUsername("photo").withPassword("photo-test");
     protected ConfigurableApplicationContext context;
+
+    protected long uniqueUserId() { return USER_IDS.incrementAndGet(); }
 
     @BeforeAll
     synchronized void startContext() {

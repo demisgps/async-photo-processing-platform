@@ -19,12 +19,13 @@ class ProcessingErrorIT extends MySqlIntegrationSupport {
         var service = context.getBean(ProcessingErrorService.class);
         var processings = context.getBean(PhotoProcessingRepository.class);
         var users = context.getBean(UserRepository.class);
-        User user = users.saveAndFlush(new User(2, "Ana"));
+        long userId = uniqueUserId();
+        User user = users.saveAndFlush(new User(userId, "Ana"));
         UUID id = UUID.randomUUID();
         processings.saveAndFlush(new PhotoProcessing(id, user, 1, ProcessingStatus.PROCESSANDO));
-        PhotoProcessingError event = new PhotoProcessingError(1, UUID.randomUUID(), Instant.now(), id, 2,
+        PhotoProcessingError event = new PhotoProcessingError(1, UUID.randomUUID(), Instant.now(), id, userId,
                 "ERRO_PROCESSAMENTO", new ProcessingError("INVALID", "bad", false),
-                new StorageObjectReference("o", "2/" + id + "/arquivo.jpg", "1"));
+                new StorageObjectReference("o", userId + "/" + id + "/arquivo.jpg", "1"));
         assertThat(service.handle(event)).isEqualTo(ProcessingErrorService.Outcome.COMMITTED);
         assertThat(service.handle(event)).isEqualTo(ProcessingErrorService.Outcome.NO_OP);
         assertThat(processings.findById(id).orElseThrow().getStatus()).isEqualTo(ProcessingStatus.ERRO_PROCESSAMENTO);

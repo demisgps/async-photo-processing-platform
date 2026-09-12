@@ -22,5 +22,6 @@ public class User {
     public Long getId() { return id; }
     public UUID getCurrentPhotoProcessingId() { return currentPhotoProcessingId; }
     public long getIdValue() { return id; }
+    public long getVersion() { return version; }
     public void promote(UUID processingId) { currentPhotoProcessingId = processingId; }
 }
