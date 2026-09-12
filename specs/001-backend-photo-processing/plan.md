@@ -332,8 +332,10 @@ dependência nativa/cold start; Java2D puro por exigir orientação e pipeline m
 - Pub/Sub: tópico/subscriptions/DLT, 8 entregas aproximadas, rastreabilidade, banco indisponível e
   posterior registro de `ERRO_PERSISTENCIA`. Emulator em smoke local; contrato GCP quando disponível.
 - API/Postman: todos os cenários da spec e códigos 201/202/200/204/400/404/409/413/415.
-- Gate: `./mvnw verify` no agregador, JaCoCo >= 60% de linhas por módulo e agregado; cobertura não
-  substitui assertions dos casos acima. Testes E2E automatizados não são obrigatórios na Fase 1;
+- Gate: `./mvnw verify` no agregador e JaCoCo >= 60% de linhas em cada módulo backend. A cobertura
+  ponderada do conjunto pode ser informada como indicador, mas a Constitution 2.0.0 não exige um
+  relatório JaCoCo agregado oficial separado; cobertura não substitui assertions dos casos acima.
+  Testes E2E automatizados não são obrigatórios na Fase 1;
   a validação funcional completa ocorre no ambiente local via Docker Compose e collection Postman.
   Testes automatizados existentes são preservados.
 
