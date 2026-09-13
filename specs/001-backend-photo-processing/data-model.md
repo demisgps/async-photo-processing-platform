@@ -42,8 +42,8 @@
 
 - `UNIQUE(usuario_id, sequencia_upload)` ordena candidatos.
 - `UNIQUE(usuario_ativo_id)` garante um ativo por usuário; MySQL admite múltiplos NULL.
-- Índices: `(usuario_id, status)`, `(status, data_inicio_processamento)`,
-  `foto_atual_processamento_id` e datas de reconciliação.
+- Índices: `(usuario_id, status)`, `(status, data_inicio_processamento)` e
+  `foto_atual_processamento_id`.
 - FK processamento -> usuário bloqueia remoção acidental; a exclusão controlada remove filhos antes
   do pai. A FK de foto atual é adicionada após ambas as tabelas e deve ser anulada dentro da
   transação de exclusão.
@@ -67,14 +67,15 @@ PERSISTINDO ---------/
 | novo | `RECEBIDA` | API validou nome e foto |
 | `RECEBIDA` | `PROCESSANDO` | API confirmou original; condição do aceite HTTP |
 | `PROCESSANDO` | `PROCESSADA` | Consumer recebe sucesso publicado pelo processor |
-| `PROCESSANDO` | `ERRO_PROCESSAMENTO` | Consumer recebe erro ou reconciliador confirma falha estagnada |
+| `PROCESSANDO` | `ERRO_PROCESSAMENTO` | Consumer recebe erro definitivo publicado pelo processor |
 | `PROCESSADA` | `PERSISTINDO` | Consumer vence CAS/lock |
 | `PERSISTINDO` | `PERSISTIDA` | Entrega inicial ou redelivery retoma; BLOB/metadados e promoção commitam juntos |
 | `PROCESSADA`/`PERSISTINDO` | `ERRO_PERSISTENCIA` | falha definitiva/esgotada registrável |
 
 Estados terminais nunca transitam. Evento repetido, antigo ou fora de ordem é no-op rastreável.
 Enquanto a falha de publicação não for detectável/registrável, `PROCESSANDO` permanece ativo e
-bloqueia upload/exclusão.
+bloqueia upload/exclusão. Não há reconciliador automático nesta fase; um processamento que não seja
+recuperado por retry, redelivery ou reexecução segura requer tratamento operacional.
 
 `PERSISTINDO` não é terminal nem no-op: somente um `PhotoProcessingResult` equivalente do mesmo
 `processamentoId` retoma a persistência final, valida e reutiliza dados existentes e evita duplicar

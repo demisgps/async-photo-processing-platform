@@ -122,10 +122,9 @@ Nenhum segredo real deve existir no environment.
   `ERRO_PERSISTENCIA`.
 - Manter banco indisponível na DLT: mensagem permanece para redelivery/retenção e log crítico é
   emitido; após retorno do banco, estado é registrado.
-- Criar `PROCESSANDO` estagnado sem objeto processado: duas varreduras após 15 minutos confirmam e
-  registram `ERRO_PROCESSAMENTO`. Com objeto processado presente, mantém ativo e sinaliza
-  uma ocorrência operacional/log de recuperação de republicação pendente; isso não cria novo
-  status de `PROCESSAMENTO_FOTO`, que permanece `PROCESSANDO`.
+- Confirmar operacionalmente que um `PROCESSANDO` não recuperado por retry, redelivery ou reexecução
+  segura permanece ativo e continua rastreável. Esta fase não possui reconciliador automático; a
+  intervenção operacional deve preservar idempotência e nunca declarar conclusão falsa.
 
 Dimensões <=1024, correção de orientação EXIF, ausência de upscale e preservação do comportamento
 de PNG são validadas nos testes automatizados do `photo-processor`, não no Happy Path do Postman.

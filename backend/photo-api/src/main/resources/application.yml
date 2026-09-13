@@ -44,6 +44,3 @@ photo:
     backoff-multiplier: 2.0
   upload:
     max-bytes: ${PHOTO_MAX_BYTES:10485760}
-  reconciliation:
-    stale-after: ${PHOTO_STALE_AFTER:15m}
-    scan-interval: ${PHOTO_RECONCILIATION_SCAN_INTERVAL:1m}

@@ -96,5 +96,5 @@ rastreável e não pode causar regressão para `ERRO_PROCESSAMENTO`. Estados ter
 - Handler DLT tenta `ERRO_PERSISTENCIA` se estado ainda permitir; banco indisponível causa NACK na
   subscription DLT. Retenção planejada: 7 dias; sem segunda DLQ.
 - Tópico único centraliza sucesso e erro, mas não implica ordenação. Duplicatas, atrasos e mensagens
-  fora de ordem nunca regridem estado nem promovem foto antiga. Se reconciliação já mudou
-  condicionalmente para `ERRO_PROCESSAMENTO`, resultado tardio é ACK/no-op rastreável.
+  fora de ordem nunca regridem estado nem promovem foto antiga. Resultado tardio para qualquer
+  estado terminal é ACK/no-op rastreável.

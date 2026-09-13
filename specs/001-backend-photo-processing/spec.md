@@ -301,9 +301,10 @@ processamento e falha definitiva de persistência.
   comunicação do resultado após esgotar todas as tentativas. O sistema MUST maximizar a recuperação
   por tentativas limitadas, reexecução segura, idempotência e registros rastreáveis, e MUST NOT
   marcar como comunicada uma publicação que não foi confirmada. Enquanto permanecer em estado
-  ativo, o processamento MUST continuar bloqueando novos uploads e a exclusão do usuário. Quando a
-  falha definitiva puder ser detectada e registrada posteriormente, o processamento MUST transitar
-  para `ERRO_PROCESSAMENTO`, tornando-se terminal.
+  ativo, o processamento MUST continuar bloqueando novos uploads e a exclusão do usuário.
+  Processamentos que permaneçam ativos depois de esgotados retry, redelivery e reexecução segura
+  MUST ser tratados operacionalmente; esta fase não possui reconciliador automático. Um reconciliador
+  MAY ser reintroduzido futuramente somente diante de necessidade real.
 - **FR-033**: Cadastro inicial aceito MUST retornar HTTP 201. Upload posterior de foto aceito MUST
   retornar HTTP 202.
 - **FR-034**: Atualização de nome bem-sucedida MUST retornar HTTP 200 com a representação atualizada

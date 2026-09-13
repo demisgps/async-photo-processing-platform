@@ -199,13 +199,13 @@ Estas tarefas endurecem o `PhotoProcessingService` básico criado na T060; não 
 - [X] T099 [US6] Implementar handler de `photo-consumer-dlq-sub` sem segunda DLT em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/consumer/DeadLetterSubscriber.java`
 - [X] T100 [US6] Registrar `ERRO_PERSISTENCIA` quando o processamento for identificável; preservar Pub/Sub message ID, `eventId` recuperável, atributos e payload bruto original quando `processamentoId` não puder ser recuperado; com banco indisponível, não declarar persistência, manter redelivery/retenção e emitir log crítico em `backend/photo-consumer/src/main/java/com/example/photoconsumer/processamento/service/DeadLetterService.java`
 
-### Reconciliação de processamento estagnado
+### Estados terminais e eventos tardios
 
-- [X] T101 [P] [US6] Criar testes de duas varreduras, janela configurável e CAS para `PROCESSANDO` estagnado em `backend/photo-api/src/test/java/com/example/photoapi/reconciliation/StalledProcessingReconcilerIT.java`
-- [X] T102 [P] [US6] Criar no `photo-api` testes da corrida de transição entre as duas varreduras do reconciliador e uma atualização concorrente, verificando CAS sem testar ACK Pub/Sub em `backend/photo-api/src/test/java/com/example/photoapi/reconciliation/ReconciliationRaceIT.java`
 - [X] T103 [P] [US6] Criar no `photo-consumer` teste de evento recebido após `ERRO_PROCESSAMENTO`, verificando ACK/no-op rastreável e ausência de ressurreição/regressão em `backend/photo-consumer/src/test/java/com/example/photoconsumer/processamento/service/LateEventAfterProcessingErrorIT.java`
-- [X] T104 [US6] Implementar reconciliador periódico que marca `ERRO_PROCESSAMENTO` somente após confirmação e update condicional em `backend/photo-api/src/main/java/com/example/photoapi/reconciliation/StalledProcessingReconciler.java`
-- [X] T105 [US6] Manter `PROCESSANDO` quando o objeto processado existir e emitir somente ocorrência operacional `PUBLICATION_PENDING` para recuperação, nunca novo status, em `backend/photo-api/src/main/java/com/example/photoapi/reconciliation/StalledProcessingReconciler.java`
+
+**Decisão posterior**: T101, T102, T104 e T105 foram retiradas do escopo. Processamentos ativos não
+recuperados pelos mecanismos assíncronos normais são tratados operacionalmente; um reconciliador
+poderá ser reintroduzido somente se houver necessidade real.
 
 **Checkpoint**: retries/redeliveries finitos não duplicam efeitos; estados nunca regridem; falhas comunicáveis terminam corretamente e falhas incomunicáveis permanecem rastreáveis.
 
@@ -317,8 +317,6 @@ não bloqueantes. A classificação abaixo registra o estado sem marcar trabalho
 | T092 | Já concluída | Testes cobrem retry transacional seletivo e NACK/propagação diante de indisponibilidade do MySQL. |
 | T097 | Já concluída | Testes cobrem configuração finita de redelivery/DLT e rastreabilidade com ou sem `processamentoId`. |
 | T098 | Já concluída | Teste Testcontainers cobre registro condicional de `ERRO_PERSISTENCIA`, estado terminal e banco indisponível. |
-| T101 | Já concluída | Testes cobrem janela configurável, duas varreduras e transição por CAS. |
-| T102 | Já concluída | Teste cobre perda da corrida de CAS sem retry forçado ou regressão. |
 | T103 | Já concluída | Teste cobre resultado tardio após `ERRO_PROCESSAMENTO` sem acesso ao Storage ou ressurreição. |
 | T107 | Já coberta por teste/validação existente | Listagem e consulta 200/404 foram aprovadas na collection Postman oficial. |
 | T108 | Já coberta por teste/validação existente | Atualização, validação e respostas HTTP foram aprovadas na collection Postman oficial. |
@@ -386,7 +384,7 @@ Foundation ─┬─> US1 ─> US2 ─> US6 ─> US4 ─> US5
 - T031–T036 são paralelizáveis por módulo e arquivo.
 - Em cada User Story, tarefas marcadas `[P]` são testes ou componentes em arquivos distintos.
 - Após a Foundation, US3 pode avançar paralelamente ao eixo US1 → US2 → US6.
-- Dentro da US6, resiliência do processor, consumer e preparação dos testes DLT/reconciliador podem avançar em paralelo respeitando suas dependências locais.
+- Dentro da US6, resiliência do processor, consumer e preparação dos testes DLT podem avançar em paralelo respeitando suas dependências locais.
 
 ---
 
@@ -433,7 +431,7 @@ Esses grupos mexem em arquivos distintos. A implementação correspondente come�
 ## Guardrails permanentes
 
 - Somente backend nesta fase; nenhum frontend, Vite, HTML de aplicação ou TypeScript de interface.
-- Somente sete estados funcionais; `PUBLICATION_PENDING` é ocorrência operacional/log e o processamento permanece `PROCESSANDO`.
+- Somente sete estados funcionais; nenhum estado adicional pode ser criado.
 - O sistema não depende da ordem do Pub/Sub; `processamentoId`, `sequencia_upload`, state machine e CAS/locks protegem monotonicidade.
 - Micro-retry do client e macro-retry/redelivery do Pub/Sub têm budgets finitos, dimensionados conjuntamente e sem retry storm.
 - Usar a terminologia **Dead Letter Topic (DLT)** do Google Cloud Pub/Sub.

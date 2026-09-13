@@ -109,7 +109,6 @@ backend/
 │       │   ├── foto/{controller,service,domain,repository,request,response}/
 │       │   ├── processamento/{service,domain,repository,response}/
 │       │   ├── storage/
-│       │   ├── reconciliation/
 │       │   ├── config/
 │       │   └── exception/
 │       └── test/java/.../          # espelha features; unit/integration por sufixo
@@ -164,14 +163,10 @@ negócio. Não há diretório frontend.
 - Executa exclusão retomável: lista referências conhecidas, trata objeto ausente como removido,
   apaga objetos, imagem persistida, processamentos e usuário; retorna 204 apenas após verificação
   integral. Falha parcial retorna 5xx e a repetição retoma idempotentemente.
-- Um reconciliador periódico detecta `PROCESSANDO` acima de 15 minutos (configurável e maior que o
-  orçamento da função). Se não houver processada determinística, após confirmação em duas varreduras
-  separadas marca `ERRO_PROCESSAMENTO` por atualização condicional. Se houver processada, emite uma
-  ocorrência operacional estruturada `PUBLICATION_PENDING` e mantém o estado `PROCESSANDO` para
-  reexecução operacional; `PUBLICATION_PENDING` nunca é persistido como estado e a API nunca publica
-  em nome do processor.
-- Se o reconciliador vencer a transição condicional para `ERRO_PROCESSAMENTO`, qualquer resultado
-  tardio do mesmo `processamentoId` é ACK/no-op rastreável. Estado terminal nunca é ressuscitado.
+- Não executa reconciliação automática de processamentos estagnados. Casos não recuperados pelos
+  mecanismos normais de retry, redelivery, DLT, idempotência e reexecução segura permanecem ativos
+  e são tratados operacionalmente. Um reconciliador somente será reintroduzido se surgir necessidade
+  real.
 
 ### photo-processor
 
@@ -184,8 +179,8 @@ negócio. Não há diretório frontend.
 - Aguarda confirmação do publish. Falha transitória após salvar lança erro para reexecução da
   plataforma. Duplicata de publicação é aceita e neutralizada no consumer.
 - Erro definitivo de imagem publica evento `ERRO_PROCESSAMENTO`; se a publicação estiver totalmente
-  indisponível, preserva logs correlacionados e deixa a reconciliação posterior concluir quando
-  detectável. Não acessa MySQL, não usa Circuit Breaker e não inclui Spring Boot Actuator; sua
+  indisponível, preserva logs correlacionados para tratamento operacional. Não acessa MySQL, não
+  usa Circuit Breaker e não inclui Spring Boot Actuator; sua
   disponibilidade é verificada pelo Functions Framework e por entrega de CloudEvent de teste.
 
 ### photo-consumer
@@ -327,7 +322,7 @@ dependência nativa/cold start; Java2D puro por exigir orientação e pipeline m
 - Processor: orientações EXIF 1–8, JPG/PNG/alpha, limites, sem upscale, create-only concorrente,
   objeto já existente, publish falha depois do save e reexecução sem transformação.
 - Assíncrono: CloudEvent duplicado, publicação duplicada, redelivery, fora de ordem, resultado tardio
-  após reconciliação terminal, terminal no-op, timeout, retries finitos, circuit open/half-open nos
+  após estado terminal, terminal no-op, timeout, retries finitos, circuit open/half-open nos
   serviços adotantes e anti-storm.
 - Pub/Sub: tópico/subscriptions/DLT, 8 entregas aproximadas, rastreabilidade, banco indisponível e
   posterior registro de `ERRO_PERSISTENCIA`. Emulator em smoke local; contrato GCP quando disponível.
@@ -346,7 +341,7 @@ Logs JSON em stdout com `service`, `event`, `usuarioId`, `processamentoId`, `sta
 `timeoutMs`, `circuitState`, `dlqTopic`, `errorCategory` e `errorCode` quando aplicáveis. Nunca incluir
 bytes, imagem, segredo ou dados sensíveis desnecessários. Eventos mínimos: upload aceito, transição,
 save/HEAD/reuse, publish iniciado/confirmado/falhou, retry/timeout, circuit opened/half-open/closed,
-redelivery/ACK/NACK/DLT, promoção/no-op, reconciliação e falha de exclusão. Não se adiciona plataforma
+redelivery/ACK/NACK/DLT, promoção/no-op e falha de exclusão. Não se adiciona plataforma
 de observabilidade na Fase 1.
 
 Spring Boot Actuator fornece health, liveness e readiness somente para `photo-api` e
@@ -363,6 +358,6 @@ testes automatizados/roteiro operacional, sem tornar a coleção dependente de m
 
 ## Complexity Tracking
 
-Nenhuma violação constitucional. O dispatcher local e o reconciliador são necessários para,
-respectivamente, reproduzir o CloudEvent sem bloquear HTTP e tornar execuções estagnadas detectáveis.
-Ambos têm responsabilidade estreita; não introduzem uma nova arquitetura de domínio.
+Nenhuma violação constitucional. O dispatcher local permanece necessário somente para reproduzir o
+CloudEvent sem bloquear HTTP. A ausência deliberada de reconciliador preserva a simplicidade do MVP;
+processamentos ativos não recuperados pelos mecanismos assíncronos normais exigem tratamento operacional.

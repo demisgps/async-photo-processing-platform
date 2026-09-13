@@ -49,7 +49,7 @@ class MigrationIT extends MySqlIntegrationSupport {
                 try (ResultSet keys = statement.getGeneratedKeys()) { keys.next(); invalidUserId = keys.getLong(1); }
             }
             assertThrows(SQLException.class,
-                    () -> insertProcessing(connection, UUID.randomUUID(), invalidUserId, 1, "PUBLICATION_PENDING"));
+                    () -> insertProcessing(connection, UUID.randomUUID(), invalidUserId, 1, "INVALID_STATUS"));
         }
     }
 

@@ -23,7 +23,7 @@ class LateEventAfterProcessingErrorIT extends MySqlIntegrationSupport {
         User user = users.saveAndFlush(new User(userId, "Terminal"));
         UUID id = UUID.randomUUID();
         PhotoProcessing processing = new PhotoProcessing(id, user, 1, ProcessingStatus.PROCESSANDO);
-        processing.failProcessing("STALLED", "confirmed");
+        processing.failProcessing("INVALID_IMAGE", "processing failed definitively");
         processings.saveAndFlush(processing);
 
         assertThat(service.handle(FinalizeProcessingIT.result(id, userId)))
