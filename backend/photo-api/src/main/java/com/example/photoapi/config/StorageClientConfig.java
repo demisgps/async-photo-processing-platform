@@ -15,6 +15,10 @@ import org.threeten.bp.Duration;
 public class StorageClientConfig {
     @Bean
     public Storage storage(StorageProperties properties) {
+        return configure(StorageOptions.newBuilder(), properties).build().getService();
+    }
+
+    StorageOptions.Builder configure(StorageOptions.Builder builder, StorageProperties properties) {
         RetrySettings retry = RetrySettings.newBuilder()
                 .setMaxAttempts(properties.maxAttempts())
                 .setInitialRetryDelay(duration(properties.initialBackoff()))
@@ -30,24 +34,25 @@ public class StorageClientConfig {
                 .setConnectTimeout((int) properties.connectTimeout().toMillis())
                 .setReadTimeout((int) properties.rpcTimeout().toMillis())
                 .build();
-        StorageOptions.Builder builder = StorageOptions.newBuilder()
-                .setProjectId(properties.projectId())
-                .setHost(properties.endpoint().toString())
+        builder
                 .setTransportOptions(transport)
                 .setRetrySettings(retry)
                 .setStorageRetryStrategy(com.google.cloud.storage.StorageRetryStrategy.getUniformStorageRetryStrategy());
-        if (isLocalEmulator(properties)) {
+        if (hasText(properties.projectId())) {
+            builder.setProjectId(properties.projectId());
+        }
+        if (properties.endpoint() != null && hasText(properties.endpoint().toString())) {
+            builder.setHost(properties.endpoint().toString());
             builder.setCredentials(GoogleCredentials.create(new AccessToken("local-emulator", new Date(Long.MAX_VALUE))));
         }
-        return builder.build().getService();
+        return builder;
     }
 
     private Duration duration(java.time.Duration value) {
         return Duration.ofMillis(value.toMillis());
     }
 
-    private boolean isLocalEmulator(StorageProperties properties) {
-        String host = properties.endpoint().getHost();
-        return "localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host) || "fake-gcs-server".equals(host);
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

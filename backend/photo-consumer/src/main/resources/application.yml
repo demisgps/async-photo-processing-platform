@@ -26,9 +26,9 @@ server:
   port: ${PORT:${SERVER_PORT:8081}}
 photo:
   storage:
-    endpoint: ${STORAGE_ENDPOINT:http://localhost:4443}
+    endpoint: ${STORAGE_ENDPOINT:}
     processed-bucket: ${PROCESSED_BUCKET:fotos-usuarios-processadas}
-    project-id: ${GCP_PROJECT_ID:local-photo-platform}
+    project-id: ${GCP_PROJECT_ID:}
     connect-timeout: 2s
     rpc-timeout: 10s
     total-timeout: 20s

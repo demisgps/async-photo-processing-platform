@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,8 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import com.google.auth.Credentials;
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
@@ -24,7 +27,7 @@ import org.junit.jupiter.api.Test;
 class PhotoStorageTest {
     @Test void downloadsGenerationAndCreatesDeterministicProcessedObject() {
         Storage client = mock(Storage.class); Blob original = mock(Blob.class); Blob created = mock(Blob.class);
-        var properties = new ProcessorProperties(URI.create("http://localhost:4443"), "original", "processed", "p", "t", 10);
+        var properties = properties(URI.create("http://localhost:4443"));
         var storage = new PhotoStorage(client, properties); UUID processingId = UUID.randomUUID();
         var event = new StorageFinalizedEvent("original", "4/" + processingId + "/arquivo.jpg", "7",
                 "image/jpeg", 3L, "original-sum", Map.of("usuarioId", "4", "processamentoId", processingId.toString()));
@@ -45,14 +48,14 @@ class PhotoStorageTest {
 
     @Test void checksExistence() {
         Storage client = mock(Storage.class);
-        var properties = new ProcessorProperties(URI.create("http://localhost:4443"), "original", "processed", "p", "t", 10);
+        var properties = properties(URI.create("http://localhost:4443"));
         when(client.get("processed", "key")).thenReturn(mock(Blob.class));
         assertThat(new PhotoStorage(client, properties).exists("processed", "key")).isTrue();
     }
 
     @Test void createOnlyRaceReusesOnlyMatchingMetadata() {
         Storage client = mock(Storage.class);
-        var properties = new ProcessorProperties(URI.create("http://localhost:4443"), "original", "processed", "p", "t", 10);
+        var properties = properties(URI.create("http://localhost:4443"));
         var storage = new PhotoStorage(client, properties);
         UUID id = UUID.randomUUID();
         var original = new StorageObjectReference("original", "4/" + id + "/arquivo.jpg", "7");
@@ -77,5 +80,29 @@ class PhotoStorageTest {
                 "originalBucket", "original", "originalName", original.name(), "originalGeneration", "different"));
         assertThatThrownBy(() -> storage.save(4, id, image, original))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("incompatível");
+    }
+
+    @Test void localModeConfiguresEmulatorHostCredentialsAndStorageProject() {
+        StorageOptions.Builder builder = mock(StorageOptions.Builder.class, org.mockito.Answers.RETURNS_SELF);
+
+        PhotoStorage.configure(builder, properties(URI.create("http://fake-gcs-server:4443")));
+
+        verify(builder).setHost("http://fake-gcs-server:4443");
+        verify(builder).setCredentials(any(Credentials.class));
+        verify(builder).setProjectId("storage-project");
+    }
+
+    @Test void cloudModeLeavesDefaultEndpointAndCredentialsForAdc() {
+        StorageOptions.Builder builder = mock(StorageOptions.Builder.class, org.mockito.Answers.RETURNS_SELF);
+
+        PhotoStorage.configure(builder, properties(null));
+
+        verify(builder, never()).setHost(any(String.class));
+        verify(builder, never()).setCredentials(any(Credentials.class));
+        verify(builder).setProjectId("storage-project");
+    }
+
+    private ProcessorProperties properties(URI endpoint) {
+        return new ProcessorProperties(endpoint, "storage-project", "original", "processed", "pubsub-project", "t", 10);
     }
 }

@@ -23,13 +23,20 @@ public class PhotoStorage {
     private final ProcessorProperties properties;
     public PhotoStorage(Storage storage, ProcessorProperties properties) { this.storage = storage; this.properties = properties; }
     public static PhotoStorage create(ProcessorProperties properties) {
-        StorageOptions.Builder builder = StorageOptions.newBuilder().setProjectId(properties.pubsubProjectId())
-                .setHost(properties.storageEndpoint().toString()).setRetrySettings(ResilienceConfig.storage())
-                .setStorageRetryStrategy(com.google.cloud.storage.StorageRetryStrategy.getUniformStorageRetryStrategy());
-        String host = properties.storageEndpoint().getHost();
-        if ("localhost".equals(host) || "fake-gcs-server".equals(host))
-            builder.setCredentials(GoogleCredentials.create(new AccessToken("local-emulator", new Date(Long.MAX_VALUE))));
+        StorageOptions.Builder builder = configure(StorageOptions.newBuilder(), properties);
         return new PhotoStorage(builder.build().getService(), properties);
+    }
+    static StorageOptions.Builder configure(StorageOptions.Builder builder, ProcessorProperties properties) {
+        builder.setRetrySettings(ResilienceConfig.storage())
+                .setStorageRetryStrategy(com.google.cloud.storage.StorageRetryStrategy.getUniformStorageRetryStrategy());
+        if (properties.storageProjectId() != null && !properties.storageProjectId().isBlank()) {
+            builder.setProjectId(properties.storageProjectId());
+        }
+        if (properties.storageEndpoint() != null && !properties.storageEndpoint().toString().isBlank()) {
+            builder.setHost(properties.storageEndpoint().toString());
+            builder.setCredentials(GoogleCredentials.create(new AccessToken("local-emulator", new Date(Long.MAX_VALUE))));
+        }
+        return builder;
     }
     public OriginalPhoto download(StorageFinalizedEvent event) {
         Blob blob = storage.get(BlobId.of(event.bucket(), event.name(), Long.parseLong(event.generation())));

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class StorageCloudEventTest {
     @Test void delegatesValidFinalizedEventAndRejectsInvalidStructure() throws Exception {
         var service = mock(PhotoProcessingService.class);
-        var props = new ProcessorProperties(URI.create("http://localhost"), "original", "processed", "p", "t", 25_000_000);
+        var props = new ProcessorProperties(URI.create("http://localhost"), "storage-p", "original", "processed", "p", "t", 25_000_000);
         var function = new PhotoProcessorFunction(props, service);
         String id = java.util.UUID.randomUUID().toString();
         function.accept(event("{\"bucket\":\"original\",\"name\":\"1/"+id+"/arquivo.jpg\",\"generation\":\"2\",\"contentType\":\"image/jpeg\",\"size\":2,\"metadata\":{\"usuarioId\":\"1\",\"processamentoId\":\""+id+"\"}}"));
@@ -20,7 +20,7 @@ class StorageCloudEventTest {
                 .isInstanceOf(Exception.class);
     }
     @Test void ignoresOtherTypesAndBuckets() throws Exception {
-        var service=mock(PhotoProcessingService.class); var props=new ProcessorProperties(URI.create("http://localhost"),"original","processed","p","t",1);
+        var service=mock(PhotoProcessingService.class); var props=new ProcessorProperties(URI.create("http://localhost"),"storage-p","original","processed","p","t",1);
         var fn=new PhotoProcessorFunction(props,service); CloudEvent other=mock(CloudEvent.class); when(other.getType()).thenReturn("other"); fn.accept(other);
         fn.accept(event("{\"bucket\":\"processed\",\"name\":\"x\",\"generation\":\"1\",\"metadata\":{}}")); verifyNoInteractions(service);
     }

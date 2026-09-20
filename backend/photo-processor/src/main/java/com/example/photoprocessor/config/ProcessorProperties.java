@@ -2,13 +2,14 @@ package com.example.photoprocessor.config;
 
 import java.net.URI;
 
-public record ProcessorProperties(URI storageEndpoint, String originalBucket, String processedBucket,
-                                  String pubsubProjectId, String resultTopic, long maxPixels) {
+public record ProcessorProperties(URI storageEndpoint, String storageProjectId, String originalBucket,
+                                  String processedBucket, String pubsubProjectId, String resultTopic, long maxPixels) {
     public static final long DEFAULT_MAX_PIXELS = 25_000_000L;
 
     public static ProcessorProperties fromEnvironment() {
         return new ProcessorProperties(
-                URI.create(value("STORAGE_ENDPOINT", "http://localhost:4443")),
+                optionalUri("STORAGE_ENDPOINT"),
+                value("GCP_PROJECT_ID", ""),
                 value("ORIGINAL_BUCKET", "fotos-usuarios-original"),
                 value("PROCESSED_BUCKET", "fotos-usuarios-processadas"),
                 value("PUBSUB_PROJECT_ID", "local-photo-platform"),
@@ -20,5 +21,10 @@ public record ProcessorProperties(URI storageEndpoint, String originalBucket, St
     private static String value(String name, String fallback) {
         String value = System.getenv(name);
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private static URI optionalUri(String name) {
+        String value = value(name, "");
+        return value.isBlank() ? null : URI.create(value);
     }
 }

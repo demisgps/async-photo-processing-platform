@@ -8,7 +8,8 @@ Este documento define ordem e checkpoints. Ele não executa comandos nem provisi
 2. Preservar HTTP 204 somente após commit/no-op válido; resposta que não corresponda a ACK ou timeout
    permite redelivery, inclusive para contrato inválido destinado a tentativas/DLT.
 3. Preservar serviços, idempotência, retomada de `PERSISTINDO`, ordenação e DLT existentes.
-4. Separar configuração local do endpoint Storage e uso cloud de endpoint padrão/ADC.
+4. Validar a configuração já adaptada: endpoint local explícito no Compose e endpoint padrão/ADC
+   quando `STORAGE_ENDPOINT` estiver ausente na GCP.
 5. Adicionar Cloud SQL Connector/configuração JDBC à API e consumer.
 6. Externalizar projeto, região, buckets, tópico, subscriptions e connection name.
 7. Revisar imagens de container para runtime, usuário não-root quando aplicável e shutdown.

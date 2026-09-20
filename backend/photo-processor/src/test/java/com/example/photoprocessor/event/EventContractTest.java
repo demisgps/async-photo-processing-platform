@@ -1,6 +1,7 @@
 package com.example.photoprocessor.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.example.photoprocessor.config.ProcessorProperties;
 import java.time.Instant;
@@ -26,12 +27,13 @@ class EventContractTest {
     }
 
     @Test
-    void processorDefaultsRemainLocalAndDoNotIncludeDatabase() {
+    void processorDefaultsAreCloudSafeAndDoNotIncludeDatabase() {
         ProcessorProperties properties = ProcessorProperties.fromEnvironment();
+        assertNull(properties.storageEndpoint());
+        assertEquals("", properties.storageProjectId());
         assertEquals(25_000_000L, properties.maxPixels());
         assertEquals("fotos-usuarios-original", properties.originalBucket());
         assertEquals("fotos-usuarios-processadas", properties.processedBucket());
         assertEquals("foto-processada", properties.resultTopic());
     }
 }
-

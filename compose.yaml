@@ -70,6 +70,7 @@ services:
       DB_USER: photo
       DB_PASSWORD: photo-local
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      GCP_PROJECT_ID: local-photo-platform
     ports:
       - "8080:8080"
     healthcheck:
@@ -96,6 +97,7 @@ services:
       DB_USER: photo
       DB_PASSWORD: photo-local
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      GCP_PROJECT_ID: local-photo-platform
     ports:
       - "8081:8081"
     networks: [photo-platform]
@@ -111,6 +113,7 @@ services:
         condition: service_completed_successfully
     environment:
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      GCP_PROJECT_ID: local-photo-platform
       PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
       PUBSUB_PROJECT_ID: local-photo-platform
       FUNCTION_TARGET: com.example.photoprocessor.processamento.PhotoProcessorFunction

@@ -166,8 +166,8 @@ O `storage-event-dispatcher` é exclusivo do ambiente local e não será implant
 - O consumer já possui adapters HTTP para os envelopes Push principal e DLT e usa HTTP 204 como
   confirmação explícita; autenticação OIDC/IAM será configurada na infraestrutura GCP.
 - A porta do consumer respeita `PORT` fornecida pelo Cloud Run e mantém 8081 como padrão local.
-- Os três componentes usam endpoint local do Storage como default; na GCP devem usar endpoint
-  padrão, ADC e as service accounts de runtime.
+- Os três componentes selecionam Storage pelo ambiente: `STORAGE_ENDPOINT` explícito usa o
+  fake-gcs-server local; sua ausência usa o endpoint padrão, ADC e a service account do runtime.
 - API e consumer usam JDBC convencional; ainda falta a configuração do Cloud SQL Connector.
 - Nomes de buckets, projeto, tópico, subscriptions e secrets ainda precisam de configuração cloud.
 - Os Dockerfiles atuais foram criados para o ambiente local; precisam ser revisados para imagens
