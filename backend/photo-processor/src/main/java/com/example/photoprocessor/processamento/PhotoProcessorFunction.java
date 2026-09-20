@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.functions.CloudEventsFunction;
 import io.cloudevents.CloudEvent;
 import java.util.logging.Logger;
+import org.slf4j.MDC;
 
 public class PhotoProcessorFunction implements CloudEventsFunction {
     private static final Logger LOGGER = Logger.getLogger(PhotoProcessorFunction.class.getName());
@@ -37,7 +38,14 @@ public class PhotoProcessorFunction implements CloudEventsFunction {
             LOGGER.info(() -> "CloudEvent ignorado: bucket incompatível bucket=" + event.bucket()); return;
         }
         validate(event);
-        service.process(event);
+        MDC.put("usuarioId", Long.toString(event.usuarioId()));
+        MDC.put("processamentoId", event.processamentoId().toString());
+        try {
+            service.process(event);
+        } finally {
+            MDC.remove("usuarioId");
+            MDC.remove("processamentoId");
+        }
     }
     private void validate(StorageFinalizedEvent event) {
         long userId = event.usuarioId();

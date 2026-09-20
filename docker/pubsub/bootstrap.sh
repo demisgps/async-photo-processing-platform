@@ -36,6 +36,7 @@ put_idempotently "/v1/projects/${project}/topics/foto-processada-dlq"
 put_idempotently "/v1/projects/${project}/subscriptions/photo-consumer-sub" "{
   \"topic\": \"projects/${project}/topics/foto-processada\",
   \"ackDeadlineSeconds\": 60,
+  \"pushConfig\": {\"pushEndpoint\": \"http://photo-consumer:8081/internal/pubsub/messages\"},
   \"retryPolicy\": {\"minimumBackoff\": \"10s\", \"maximumBackoff\": \"300s\"},
   \"deadLetterPolicy\": {
     \"deadLetterTopic\": \"projects/${project}/topics/foto-processada-dlq\",
@@ -46,6 +47,7 @@ put_idempotently "/v1/projects/${project}/subscriptions/photo-consumer-sub" "{
 
 put_idempotently "/v1/projects/${project}/subscriptions/photo-consumer-dlq-sub" "{
   \"topic\": \"projects/${project}/topics/foto-processada-dlq\",
+  \"pushConfig\": {\"pushEndpoint\": \"http://photo-consumer:8081/internal/pubsub/dead-letter\"},
   \"messageRetentionDuration\": \"604800s\"
 }"
 

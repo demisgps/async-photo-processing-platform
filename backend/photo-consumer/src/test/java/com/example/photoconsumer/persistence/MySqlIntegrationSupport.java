@@ -39,8 +39,7 @@ public abstract class MySqlIntegrationSupport {
                         "--spring.datasource.password=" + MYSQL.getPassword(),
                         "--spring.flyway.enabled=true",
                         "--spring.flyway.locations=filesystem:../photo-api/src/main/resources/db/migration",
-                        "--spring.jpa.hibernate.ddl-auto=validate",
-                        "--photo.pubsub.enabled=false");
+                        "--spring.jpa.hibernate.ddl-auto=validate");
         reset(context.getBean(ProcessedPhotoStorage.class));
     }
 

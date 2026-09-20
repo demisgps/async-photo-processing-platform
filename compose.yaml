@@ -96,9 +96,6 @@ services:
       DB_USER: photo
       DB_PASSWORD: photo-local
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
-      PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-      PUBSUB_PROJECT_ID: local-photo-platform
-      PUBSUB_CONSUMER_ENABLED: "true"
     ports:
       - "8081:8081"
     networks: [photo-platform]
@@ -133,7 +130,7 @@ services:
       ORIGINAL_BUCKET: fotos-usuarios-original
       FUNCTIONS_ENDPOINT: http://photo-processor:8080
       POLL_INTERVAL_SECONDS: "2"
-      DELIVERY_TIMEOUT_SECONDS: "5"
+      DELIVERY_TIMEOUT_SECONDS: "60"
       STORAGE_TIMEOUT_SECONDS: "5"
       STATE_DIR: /state
     volumes:

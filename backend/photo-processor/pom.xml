@@ -13,6 +13,7 @@
     <dependency><groupId>com.google.cloud</groupId><artifactId>google-cloud-pubsub</artifactId><version>${google-cloud-pubsub.version}</version></dependency>
     <dependency><groupId>com.fasterxml.jackson.core</groupId><artifactId>jackson-databind</artifactId></dependency>
     <dependency><groupId>com.fasterxml.jackson.datatype</groupId><artifactId>jackson-datatype-jsr310</artifactId></dependency>
+    <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId></dependency>
     <dependency><groupId>net.coobird</groupId><artifactId>thumbnailator</artifactId><version>${thumbnailator.version}</version></dependency>
     <dependency><groupId>com.twelvemonkeys.imageio</groupId><artifactId>imageio-jpeg</artifactId><version>${twelvemonkeys.version}</version></dependency>
     <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>

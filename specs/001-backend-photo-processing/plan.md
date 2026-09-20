@@ -187,12 +187,12 @@ negócio. Não há diretório frontend.
 
 - Inclui Spring Boot Actuator com a mesma exposição restrita de health, liveness e readiness do
   `photo-api`, permitindo checks locais e futura integração com containers/orquestração.
-- StreamingPull com flow control alinhado ao pool MySQL; ACK somente após commit ou no-op de
-  mensagem contratualmente válida que seja duplicada, atrasada, fora de ordem, terminal ou
-  logicamente não aplicável pelas regras monotônicas.
+- Pub/Sub Push por endpoints HTTP separados para a subscription principal e a DLT; responde 204
+  somente após commit ou no-op de mensagem contratualmente válida que seja duplicada, atrasada,
+  fora de ordem, terminal ou logicamente não aplicável pelas regras monotônicas.
 - Valida schema e referências. Payload não desserializável, `schemaVersion` incompatível, IDs
-  obrigatórios ausentes ou referência estruturalmente inválida falha/NACK e é redeliverado até a DLT
-  para diagnóstico, sem descarte silencioso.
+  obrigatórios ausentes ou referência estruturalmente inválida recebe resposta diferente de ACK e é
+  redeliverado até a DLT para diagnóstico, sem descarte silencioso.
 - Trava `PROCESSAMENTO_FOTO` e `USUARIO`; transições usam estado esperado e nunca regridem.
 - `PROCESSADA -> PERSISTINDO` é condicional. Download ocorre fora da transação longa. Somente um
   `PhotoProcessingResult` equivalente do mesmo `processamentoId` encontrado em `PERSISTINDO` retoma

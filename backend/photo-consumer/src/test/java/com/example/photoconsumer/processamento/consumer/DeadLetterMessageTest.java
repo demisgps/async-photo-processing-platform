@@ -29,6 +29,8 @@ class DeadLetterMessageTest {
     @Test void brokerBootstrapDefinesFiniteRedeliveryDltAndRetention() throws Exception {
         String bootstrap = Files.readString(Path.of("../../docker/pubsub/bootstrap.sh"));
         assertThat(bootstrap).contains("foto-processada-dlq", "\\\"maxDeliveryAttempts\\\": 8",
-                "\\\"minimumBackoff\\\": \\\"10s", "\\\"maximumBackoff\\\": \\\"300s", "604800s");
+                "\\\"minimumBackoff\\\": \\\"10s", "\\\"maximumBackoff\\\": \\\"300s", "604800s",
+                "http://photo-consumer:8081/internal/pubsub/messages",
+                "http://photo-consumer:8081/internal/pubsub/dead-letter");
     }
 }

@@ -23,7 +23,7 @@ management:
         enabled: true
       show-details: never
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${PORT:${SERVER_PORT:8081}}
 photo:
   storage:
     endpoint: ${STORAGE_ENDPOINT:http://localhost:4443}
@@ -36,12 +36,5 @@ photo:
     initial-backoff: 200ms
     max-backoff: 2s
     backoff-multiplier: 2.0
-  pubsub:
-    project-id: ${PUBSUB_PROJECT_ID:local-photo-platform}
-    subscription: ${PUBSUB_SUBSCRIPTION:photo-consumer-sub}
-    dead-letter-subscription: ${PUBSUB_DLT_SUBSCRIPTION:photo-consumer-dlq-sub}
-    enabled: ${PUBSUB_CONSUMER_ENABLED:false}
-    ack-deadline: 60s
-    max-outstanding-messages: 100
 # Micro-retry de Storage: até 3 tentativas por entrega. Macro-redelivery: subscription Pub/Sub,
 # até 8 entregas best-effort (10s–300s). Ambos são finitos e dimensionados conjuntamente.
