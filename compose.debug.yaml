@@ -1,0 +1,14 @@
+services:
+  photo-api:
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
+    ports:
+      - "127.0.0.1:5006:5006"
+
+  photo-consumer:
+    environment:
+      JAVA_TOOL_OPTIONS: >-
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "127.0.0.1:5005:5005"
