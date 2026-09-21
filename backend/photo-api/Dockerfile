@@ -8,8 +8,13 @@ COPY photo-processor/pom.xml photo-processor/pom.xml
 RUN ./mvnw -pl photo-api -am -DskipTests package
 
 FROM eclipse-temurin:25-jre
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && groupadd --system app \
+    && useradd --system --gid app --home-dir /app --no-create-home app \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY --from=build /workspace/photo-api/target/photo-api-1.0.0-SNAPSHOT.jar app.jar
+COPY --from=build --chown=app:app /workspace/photo-api/target/photo-api-1.0.0-SNAPSHOT.jar app.jar
+USER app:app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -54,6 +54,12 @@ conjunto para proteger o limite de conexões do Cloud SQL.
 Função Java 25 baseada em Functions Framework. Eventarc entrega um CloudEvent quando um objeto é
 finalizado no bucket original.
 
+O Dockerfile existente do módulo é exclusivo do ambiente local e executa o Functions Framework
+por meio do plugin Maven. O deployment GCP futuro será feito a partir do código-fonte com runtime
+gerenciado `java25` e entry point
+`com.example.photoprocessor.processamento.PhotoProcessorFunction`. O empacotamento do source bundle
+Maven será definido e validado em uma etapa posterior, antes do Terraform.
+
 Responsabilidades:
 
 - validar bucket, chave, geração, `usuarioId` e `processamentoId`;
@@ -199,8 +205,9 @@ senha; IAM Database Authentication não é habilitada.
   `CLOUD_SQL_CONNECTION_NAME`, preservando um único `DataSource` e Flyway apenas na API.
 - O contrato local/cloud de projeto, buckets, tópico, banco e endpoints está consolidado; falta à
   infraestrutura fornecer os valores cloud, subscriptions e secrets.
-- Os Dockerfiles atuais foram criados para o ambiente local; precisam ser revisados para imagens
-  finais do Cloud Run. A função pode usar o build gerenciado de Cloud Run functions.
+- Os Dockerfiles de API e consumer produzem imagens finais Java 25 para Cloud Run, executadas como
+  usuário não-root; o Dockerfile do processor permanece local-only e a função usará futuramente o
+  build gerenciado de Cloud Run functions.
 
 ## Referências oficiais
 

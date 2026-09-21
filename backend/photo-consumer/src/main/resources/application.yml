@@ -16,7 +16,7 @@ spring:
     hibernate:
       ddl-auto: validate
   lifecycle:
-    timeout-per-shutdown-phase: 20s
+    timeout-per-shutdown-phase: 8s
 management:
   endpoints:
     web:

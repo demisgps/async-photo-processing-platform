@@ -8,7 +8,10 @@ COPY photo-processor/pom.xml photo-processor/pom.xml
 RUN ./mvnw -pl photo-consumer -am -DskipTests package
 
 FROM eclipse-temurin:25-jre
+RUN groupadd --system app \
+    && useradd --system --gid app --home-dir /app --no-create-home app
 WORKDIR /app
-COPY --from=build /workspace/photo-consumer/target/photo-consumer-1.0.0-SNAPSHOT.jar app.jar
+COPY --from=build --chown=app:app /workspace/photo-consumer/target/photo-consumer-1.0.0-SNAPSHOT.jar app.jar
+USER app:app
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -23,7 +23,7 @@ spring:
       max-file-size: 11MB
       max-request-size: 22MB
   lifecycle:
-    timeout-per-shutdown-phase: 20s
+    timeout-per-shutdown-phase: 8s
 management:
   endpoints:
     web:

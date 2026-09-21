@@ -14,8 +14,13 @@ Este documento define ordem e checkpoints. Ele não executa comandos nem provisi
    `CLOUD_SQL_CONNECTION_NAME`, com um único `DataSource` e sem IAM Database Authentication.
 6. Consumir na infraestrutura o contrato já consolidado: projeto, buckets, tópico, connection name,
    usuário e segredo do banco são explícitos; endpoints de emuladores existem somente no Compose.
-7. Revisar imagens de container para runtime, usuário não-root quando aplicável e shutdown.
+7. Preservar as imagens Java 25 já preparadas para API e consumer, executadas como usuário
+   não-root e com shutdown alinhado à janela do Cloud Run.
 8. Não reintroduzir reconciliador.
+9. Manter o Dockerfile do processor somente no ambiente local; preparar futuramente seu source
+   deployment com runtime `java25`, Functions Framework e entry point
+   `com.example.photoprocessor.processamento.PhotoProcessorFunction`, validando antes o formato do
+   source bundle Maven.
 
 ### Contrato de configuração
 
