@@ -2,9 +2,14 @@ spring:
   application:
     name: photo-api
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/photo_platform}
-    username: ${DB_USER:photo}
-    password: ${DB_PASSWORD:photo-local}
+    url: ${DB_URL:}
+    username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 0
+      connection-timeout: 10000
+      validation-timeout: 5000
   jpa:
     open-in-view: false
     hibernate.naming.physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
@@ -30,6 +35,9 @@ management:
         enabled: true
       show-details: never
 photo:
+  cloud-sql:
+    connection-name: ${CLOUD_SQL_CONNECTION_NAME:}
+    database-name: ${DB_NAME:}
   storage:
     endpoint: ${STORAGE_ENDPOINT:}
     original-bucket: ${ORIGINAL_BUCKET:fotos-usuarios-original}

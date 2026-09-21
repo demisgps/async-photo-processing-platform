@@ -37,6 +37,8 @@ public abstract class MySqlIntegrationSupport {
                 .run("--spring.datasource.url=" + MYSQL.getJdbcUrl(),
                         "--spring.datasource.username=" + MYSQL.getUsername(),
                         "--spring.datasource.password=" + MYSQL.getPassword(),
+                        "--photo.cloud-sql.connection-name=",
+                        "--photo.cloud-sql.database-name=",
                         "--spring.flyway.enabled=true",
                         "--spring.flyway.locations=filesystem:../photo-api/src/main/resources/db/migration",
                         "--spring.jpa.hibernate.ddl-auto=validate",
