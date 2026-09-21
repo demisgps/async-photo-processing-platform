@@ -10,10 +10,23 @@ Este documento define ordem e checkpoints. Ele não executa comandos nem provisi
 3. Preservar serviços, idempotência, retomada de `PERSISTINDO`, ordenação e DLT existentes.
 4. Validar a configuração já adaptada: endpoint local explícito no Compose e endpoint padrão/ADC
    quando `STORAGE_ENDPOINT` estiver ausente na GCP.
-5. Adicionar Cloud SQL Connector/configuração JDBC à API e consumer.
-6. Externalizar projeto, região, buckets, tópico, subscriptions e connection name.
+5. Validar a seleção já implementada entre JDBC local e Cloud SQL Java Connector por
+   `CLOUD_SQL_CONNECTION_NAME`, com um único `DataSource` e sem IAM Database Authentication.
+6. Consumir na infraestrutura o contrato já consolidado: projeto, buckets, tópico, connection name,
+   usuário e segredo do banco são explícitos; endpoints de emuladores existem somente no Compose.
 7. Revisar imagens de container para runtime, usuário não-root quando aplicável e shutdown.
 8. Não reintroduzir reconciliador.
+
+### Contrato de configuração
+
+- **Local:** Compose fornece `GCP_PROJECT_ID`, `ORIGINAL_BUCKET`, `PROCESSED_BUCKET`,
+  `PUBSUB_RESULT_TOPIC`, `STORAGE_ENDPOINT`, `PUBSUB_EMULATOR_HOST`, `DB_URL`, `DB_USER` e
+  `DB_PASSWORD`; `CLOUD_SQL_CONNECTION_NAME` permanece ausente.
+- **GCP:** Terraform/runtime fornecerão projeto, nomes dos recursos, `CLOUD_SQL_CONNECTION_NAME`,
+  `DB_NAME`, `DB_USER` e `DB_PASSWORD` via Secret Manager; endpoints de emuladores e `DB_URL`
+  permanecerão ausentes para permitir endpoint padrão, ADC e Cloud SQL Connector.
+- **Comum:** timeouts, retries, Circuit Breaker, Hikari, limites funcionais, JPA/Flyway, shutdown e
+  logging permanecem na configuração versionada por serem independentes do ambiente.
 
 ## 2. Validação local
 

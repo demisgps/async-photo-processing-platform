@@ -89,7 +89,7 @@ class PhotoStorageTest {
 
         verify(builder).setHost("http://fake-gcs-server:4443");
         verify(builder).setCredentials(any(Credentials.class));
-        verify(builder).setProjectId("storage-project");
+        verify(builder).setProjectId("configured-project");
     }
 
     @Test void cloudModeLeavesDefaultEndpointAndCredentialsForAdc() {
@@ -99,10 +99,10 @@ class PhotoStorageTest {
 
         verify(builder, never()).setHost(any(String.class));
         verify(builder, never()).setCredentials(any(Credentials.class));
-        verify(builder).setProjectId("storage-project");
+        verify(builder).setProjectId("configured-project");
     }
 
     private ProcessorProperties properties(URI endpoint) {
-        return new ProcessorProperties(endpoint, "storage-project", "original", "processed", "pubsub-project", "t", 10);
+        return new ProcessorProperties(endpoint, "configured-project", "original", "processed", "t", 10);
     }
 }

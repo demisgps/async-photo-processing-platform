@@ -1,6 +1,7 @@
 package com.example.photoconsumer.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,6 +50,15 @@ class StorageClientConfigTest {
         assertThat(client.getOptions().getProjectId()).isEqualTo("configured-project");
         assertThat(client.getOptions().getRetrySettings().getMaxAttempts()).isEqualTo(3);
         assertThat(client.getOptions().getRetrySettings().getTotalTimeout().toMillis()).isEqualTo(20_000);
+    }
+
+    @Test
+    void missingRequiredProcessedBucketFailsClearly() {
+        assertThatThrownBy(() -> new StorageProperties(null, "", "project",
+                Duration.ofSeconds(2), Duration.ofSeconds(10), Duration.ofSeconds(20), 3,
+                Duration.ofMillis(200), Duration.ofSeconds(2), 2.0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("PROCESSED_BUCKET");
     }
 
     private StorageProperties properties(URI endpoint) {

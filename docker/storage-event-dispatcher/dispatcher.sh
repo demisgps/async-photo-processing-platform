@@ -1,9 +1,13 @@
 #!/bin/sh
 set -eu
 
-storage_endpoint="${STORAGE_ENDPOINT:-http://fake-gcs-server:4443}"
-bucket="${ORIGINAL_BUCKET:-fotos-usuarios-original}"
-functions_endpoint="${FUNCTIONS_ENDPOINT:-http://photo-processor:8080}"
+: "${STORAGE_ENDPOINT:?STORAGE_ENDPOINT deve ser informado}"
+: "${ORIGINAL_BUCKET:?ORIGINAL_BUCKET deve ser informado}"
+: "${FUNCTIONS_ENDPOINT:?FUNCTIONS_ENDPOINT deve ser informado}"
+
+storage_endpoint="$STORAGE_ENDPOINT"
+bucket="$ORIGINAL_BUCKET"
+functions_endpoint="$FUNCTIONS_ENDPOINT"
 poll_interval="${POLL_INTERVAL_SECONDS:-2}"
 delivery_timeout="${DELIVERY_TIMEOUT_SECONDS:-60}"
 storage_timeout="${STORAGE_TIMEOUT_SECONDS:-5}"

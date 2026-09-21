@@ -25,7 +25,7 @@ public class ProcessingEventPublisher implements AutoCloseable {
     }
     public static ProcessingEventPublisher create(ProcessorProperties properties) {
         try {
-            var builder = Publisher.newBuilder(ProjectTopicName.of(properties.pubsubProjectId(), properties.resultTopic()));
+            var builder = Publisher.newBuilder(topicName(properties));
             builder.setRetrySettings(ResilienceConfig.publisher());
             String emulator = System.getenv("PUBSUB_EMULATOR_HOST");
             if (emulator != null && !emulator.isBlank()) {
@@ -35,6 +35,9 @@ public class ProcessingEventPublisher implements AutoCloseable {
             }
             return new ProcessingEventPublisher(builder.build());
         } catch (Exception exception) { throw new IllegalStateException("Falha ao configurar publisher", exception); }
+    }
+    static ProjectTopicName topicName(ProcessorProperties properties) {
+        return ProjectTopicName.of(properties.gcpProjectId(), properties.resultTopic());
     }
     public String publish(Object event) {
         try {

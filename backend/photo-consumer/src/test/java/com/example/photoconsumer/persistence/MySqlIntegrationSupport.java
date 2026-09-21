@@ -43,6 +43,7 @@ public abstract class MySqlIntegrationSupport {
                         "--spring.flyway.locations=filesystem:../photo-api/src/main/resources/db/migration",
                         "--spring.jpa.hibernate.ddl-auto=validate",
                         "--photo.storage.endpoint=http://localhost:4443",
+                        "--photo.storage.processed-bucket=fotos-usuarios-processadas",
                         "--photo.storage.project-id=integration-test");
         reset(context.getBean(ProcessedPhotoStorage.class));
     }

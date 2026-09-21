@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
+import com.example.photoprocessor.config.ProcessorProperties;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.pubsub.v1.PubsubMessage;
 import java.time.Instant;
@@ -15,6 +16,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class ProcessingEventPublisherTest {
+    @Test
+    void resultTopicUsesUnifiedGcpProjectId() {
+        var properties = new ProcessorProperties(null, "unified-project", "original", "processed",
+                "result-topic", ProcessorProperties.DEFAULT_MAX_PIXELS);
+
+        assertThat(ProcessingEventPublisher.topicName(properties).toString())
+                .isEqualTo("projects/unified-project/topics/result-topic");
+    }
+
     @Test void serializesMetadataOnlyAndWaitsForPublication() throws Exception {
         Publisher publisher = mock(Publisher.class); ApiFuture<String> future = mock(ApiFuture.class);
         when(publisher.publish(any())).thenReturn(future); when(future.get(20, java.util.concurrent.TimeUnit.SECONDS)).thenReturn("message-1");

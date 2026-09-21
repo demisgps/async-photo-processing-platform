@@ -34,14 +34,16 @@ management:
       probes:
         enabled: true
       show-details: never
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
 photo:
   cloud-sql:
     connection-name: ${CLOUD_SQL_CONNECTION_NAME:}
     database-name: ${DB_NAME:}
   storage:
     endpoint: ${STORAGE_ENDPOINT:}
-    original-bucket: ${ORIGINAL_BUCKET:fotos-usuarios-original}
-    processed-bucket: ${PROCESSED_BUCKET:fotos-usuarios-processadas}
+    original-bucket: ${ORIGINAL_BUCKET:}
+    processed-bucket: ${PROCESSED_BUCKET:}
     project-id: ${GCP_PROJECT_ID:}
     connect-timeout: 2s
     rpc-timeout: 10s

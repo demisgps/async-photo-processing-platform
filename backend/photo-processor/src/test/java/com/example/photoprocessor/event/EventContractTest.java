@@ -1,7 +1,7 @@
 package com.example.photoprocessor.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.example.photoprocessor.config.ProcessorProperties;
 import java.time.Instant;
@@ -27,13 +27,13 @@ class EventContractTest {
     }
 
     @Test
-    void processorDefaultsAreCloudSafeAndDoNotIncludeDatabase() {
-        ProcessorProperties properties = ProcessorProperties.fromEnvironment();
-        assertNull(properties.storageEndpoint());
-        assertEquals("", properties.storageProjectId());
-        assertEquals(25_000_000L, properties.maxPixels());
-        assertEquals("fotos-usuarios-original", properties.originalBucket());
-        assertEquals("fotos-usuarios-processadas", properties.processedBucket());
-        assertEquals("foto-processada", properties.resultTopic());
+    void processorRequiresEnvironmentSpecificResources() {
+        var missingBucket = assertThrows(IllegalArgumentException.class,
+                () -> new ProcessorProperties(null, "project", "", "processed", "topic", 25_000_000));
+        assertEquals("ORIGINAL_BUCKET deve ser informado", missingBucket.getMessage());
+
+        var missingTopic = assertThrows(IllegalArgumentException.class,
+                () -> new ProcessorProperties(null, "project", "original", "processed", "", 25_000_000));
+        assertEquals("PUBSUB_RESULT_TOPIC deve ser informado", missingTopic.getMessage());
     }
 }

@@ -161,6 +161,33 @@ upload ou intervenção manual.
 
 O `storage-event-dispatcher` é exclusivo do ambiente local e não será implantado.
 
+## Contrato de configuração local e cloud
+
+A configuração base não contém endpoints de emuladores, credenciais locais ou nomes implícitos de
+recursos. O mesmo artefato seleciona os serviços reais quando os endpoints locais estão ausentes.
+
+| Configuração | Local (Compose) | GCP (infraestrutura futura) |
+|---|---|---|
+| `GCP_PROJECT_ID` | `local-photo-platform` | ID do único projeto GCP |
+| `ORIGINAL_BUCKET` | `fotos-usuarios-original` | nome provisionado do bucket original |
+| `PROCESSED_BUCKET` | `fotos-usuarios-processadas` | nome provisionado do bucket processado |
+| `PUBSUB_RESULT_TOPIC` | `foto-processada` | nome provisionado do tópico de resultado |
+| `STORAGE_ENDPOINT` | `http://fake-gcs-server:4443` | ausente; SDK usa Cloud Storage e ADC |
+| `PUBSUB_EMULATOR_HOST` | `pubsub-emulator:8085` no processor e bootstrap | ausente; SDK usa Pub/Sub e ADC |
+| `DB_URL` | `jdbc:mysql://mysql:3306/photo_platform` | não utilizado pelo modo Connector |
+| `CLOUD_SQL_CONNECTION_NAME` | ausente | connection name da instância |
+| `DB_NAME` | fornecido quando necessário | nome do schema MySQL |
+| `DB_USER` | `photo` | usuário MySQL via configuração de runtime |
+| `DB_PASSWORD` | `photo-local` | Secret Manager |
+| `PORT` | opcional; fallbacks 8080/8081 | injetado pelo Cloud Run |
+
+Projeto, buckets e tópico são obrigatórios nos componentes que os utilizam. `STORAGE_ENDPOINT`,
+`PUBSUB_EMULATOR_HOST`, `DB_URL` e `CLOUD_SQL_CONNECTION_NAME` selecionam integrações específicas do
+ambiente e, portanto, não possuem defaults locais na configuração base. API e consumer usam um
+único `DataSource`: JDBC convencional quando o connection name está ausente e Cloud SQL Java
+Connector, Public IP e ADC quando ele está presente. A autenticação MySQL continua usando usuário e
+senha; IAM Database Authentication não é habilitada.
+
 ## Lacunas atuais antes do deployment
 
 - O consumer já possui adapters HTTP para os envelopes Push principal e DLT e usa HTTP 204 como
@@ -168,8 +195,10 @@ O `storage-event-dispatcher` é exclusivo do ambiente local e não será implant
 - A porta do consumer respeita `PORT` fornecida pelo Cloud Run e mantém 8081 como padrão local.
 - Os três componentes selecionam Storage pelo ambiente: `STORAGE_ENDPOINT` explícito usa o
   fake-gcs-server local; sua ausência usa o endpoint padrão, ADC e a service account do runtime.
-- API e consumer usam JDBC convencional; ainda falta a configuração do Cloud SQL Connector.
-- Nomes de buckets, projeto, tópico, subscriptions e secrets ainda precisam de configuração cloud.
+- API e consumer já selecionam JDBC convencional local ou Cloud SQL Java Connector com ADC por
+  `CLOUD_SQL_CONNECTION_NAME`, preservando um único `DataSource` e Flyway apenas na API.
+- O contrato local/cloud de projeto, buckets, tópico, banco e endpoints está consolidado; falta à
+  infraestrutura fornecer os valores cloud, subscriptions e secrets.
 - Os Dockerfiles atuais foram criados para o ambiente local; precisam ser revisados para imagens
   finais do Cloud Run. A função pode usar o build gerenciado de Cloud Run functions.
 

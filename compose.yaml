@@ -31,6 +31,9 @@ services:
     depends_on: [fake-gcs-server]
     environment:
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
+      GCP_PROJECT_ID: local-photo-platform
+      ORIGINAL_BUCKET: fotos-usuarios-original
+      PROCESSED_BUCKET: fotos-usuarios-processadas
     volumes:
       - ./docker/fake-gcs-server/bootstrap.sh:/bootstrap.sh:ro
     entrypoint: ["/bin/sh", "/bootstrap.sh"]
@@ -49,7 +52,13 @@ services:
     depends_on: [pubsub-emulator]
     environment:
       PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-      PUBSUB_PROJECT_ID: local-photo-platform
+      GCP_PROJECT_ID: local-photo-platform
+      PUBSUB_RESULT_TOPIC: foto-processada
+      PUBSUB_DLT_TOPIC: foto-processada-dlq
+      PUBSUB_MAIN_SUBSCRIPTION: photo-consumer-sub
+      PUBSUB_DLT_SUBSCRIPTION: photo-consumer-dlq-sub
+      PUBSUB_MAIN_PUSH_ENDPOINT: http://photo-consumer:8081/internal/pubsub/messages
+      PUBSUB_DLT_PUSH_ENDPOINT: http://photo-consumer:8081/internal/pubsub/dead-letter
     volumes:
       - ./docker/pubsub/bootstrap.sh:/bootstrap.sh:ro
     entrypoint: ["/bin/bash", "/bootstrap.sh"]
@@ -71,6 +80,8 @@ services:
       DB_PASSWORD: photo-local
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
       GCP_PROJECT_ID: local-photo-platform
+      ORIGINAL_BUCKET: fotos-usuarios-original
+      PROCESSED_BUCKET: fotos-usuarios-processadas
     ports:
       - "8080:8080"
     healthcheck:
@@ -98,6 +109,7 @@ services:
       DB_PASSWORD: photo-local
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
       GCP_PROJECT_ID: local-photo-platform
+      PROCESSED_BUCKET: fotos-usuarios-processadas
     ports:
       - "8081:8081"
     networks: [photo-platform]
@@ -115,7 +127,9 @@ services:
       STORAGE_ENDPOINT: http://fake-gcs-server:4443
       GCP_PROJECT_ID: local-photo-platform
       PUBSUB_EMULATOR_HOST: pubsub-emulator:8085
-      PUBSUB_PROJECT_ID: local-photo-platform
+      ORIGINAL_BUCKET: fotos-usuarios-original
+      PROCESSED_BUCKET: fotos-usuarios-processadas
+      PUBSUB_RESULT_TOPIC: foto-processada
       FUNCTION_TARGET: com.example.photoprocessor.processamento.PhotoProcessorFunction
     ports:
       - "8082:8080"

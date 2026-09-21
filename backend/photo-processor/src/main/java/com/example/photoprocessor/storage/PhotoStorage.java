@@ -29,8 +29,8 @@ public class PhotoStorage {
     static StorageOptions.Builder configure(StorageOptions.Builder builder, ProcessorProperties properties) {
         builder.setRetrySettings(ResilienceConfig.storage())
                 .setStorageRetryStrategy(com.google.cloud.storage.StorageRetryStrategy.getUniformStorageRetryStrategy());
-        if (properties.storageProjectId() != null && !properties.storageProjectId().isBlank()) {
-            builder.setProjectId(properties.storageProjectId());
+        if (properties.gcpProjectId() != null && !properties.gcpProjectId().isBlank()) {
+            builder.setProjectId(properties.gcpProjectId());
         }
         if (properties.storageEndpoint() != null && !properties.storageEndpoint().toString().isBlank()) {
             builder.setHost(properties.storageEndpoint().toString());

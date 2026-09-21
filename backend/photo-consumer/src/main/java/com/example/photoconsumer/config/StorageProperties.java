@@ -8,4 +8,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record StorageProperties(URI endpoint, String processedBucket, String projectId,
                                 Duration connectTimeout, Duration rpcTimeout, Duration totalTimeout,
                                 int maxAttempts, Duration initialBackoff, Duration maxBackoff,
-                                double backoffMultiplier) {}
+                                double backoffMultiplier) {
+    public StorageProperties {
+        if (processedBucket == null || processedBucket.isBlank()) {
+            throw new IllegalArgumentException("PROCESSED_BUCKET deve ser informado");
+        }
+    }
+}
