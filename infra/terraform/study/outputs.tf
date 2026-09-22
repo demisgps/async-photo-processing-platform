@@ -52,3 +52,13 @@ output "service_account_emails" {
   description = "E-mails das service accounts criadas para as fases de runtime e deployment."
   value       = { for key, account in google_service_account.application : key => account.email }
 }
+
+output "photo_api_uri" {
+  description = "URI pública do Cloud Run Service photo-api."
+  value       = google_cloud_run_v2_service.photo_api.uri
+}
+
+output "photo_consumer_uri" {
+  description = "URI autenticada do Cloud Run Service photo-consumer."
+  value       = google_cloud_run_v2_service.photo_consumer.uri
+}
