@@ -57,8 +57,13 @@ finalizado no bucket original.
 O Dockerfile existente do módulo é exclusivo do ambiente local e executa o Functions Framework
 por meio do plugin Maven. O deployment GCP futuro será feito a partir do código-fonte com runtime
 gerenciado `java25` e entry point
-`com.example.photoprocessor.processamento.PhotoProcessorFunction`. O empacotamento do source bundle
-Maven será definido e validado em uma etapa posterior, antes do Terraform.
+`com.example.photoprocessor.processamento.PhotoProcessorFunction`.
+
+O script `backend/scripts/package-photo-processor-source.sh` gera um source bundle reproduzível em
+`backend/target/cloud-functions/photo-processor/`. O ZIP contém na raiz o POM do processor com o
+`relativePath` temporariamente direcionado a `parent/pom.xml`, a cópia do POM pai, Maven Wrapper e
+`src/main/java`/`src/main/resources`. O ZIP e seu checksum SHA-256 serão consumidos futuramente pelo
+Terraform. O build remoto na GCP ainda não foi executado.
 
 Responsabilidades:
 
@@ -182,7 +187,7 @@ recursos. O mesmo artefato seleciona os serviços reais quando os endpoints loca
 | `PUBSUB_EMULATOR_HOST` | `pubsub-emulator:8085` no processor e bootstrap | ausente; SDK usa Pub/Sub e ADC |
 | `DB_URL` | `jdbc:mysql://mysql:3306/photo_platform` | não utilizado pelo modo Connector |
 | `CLOUD_SQL_CONNECTION_NAME` | ausente | connection name da instância |
-| `DB_NAME` | fornecido quando necessário | nome do schema MySQL |
+| `DB_NAME` | não utilizado; o modo local usa o `DB_URL` completo | nome do schema MySQL fornecido pela infraestrutura para o Cloud SQL Connector |
 | `DB_USER` | `photo` | usuário MySQL via configuração de runtime |
 | `DB_PASSWORD` | `photo-local` | Secret Manager |
 | `PORT` | opcional; fallbacks 8080/8081 | injetado pelo Cloud Run |
@@ -206,8 +211,8 @@ senha; IAM Database Authentication não é habilitada.
 - O contrato local/cloud de projeto, buckets, tópico, banco e endpoints está consolidado; falta à
   infraestrutura fornecer os valores cloud, subscriptions e secrets.
 - Os Dockerfiles de API e consumer produzem imagens finais Java 25 para Cloud Run, executadas como
-  usuário não-root; o Dockerfile do processor permanece local-only e a função usará futuramente o
-  build gerenciado de Cloud Run functions.
+  usuário não-root; o Dockerfile do processor permanece local-only. O source bundle da função já é
+  gerado de forma isolada e reproduzível, mas ainda falta validá-lo no build gerenciado da GCP.
 
 ## Referências oficiais
 

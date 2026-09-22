@@ -17,10 +17,11 @@ Este documento define ordem e checkpoints. Ele não executa comandos nem provisi
 7. Preservar as imagens Java 25 já preparadas para API e consumer, executadas como usuário
    não-root e com shutdown alinhado à janela do Cloud Run.
 8. Não reintroduzir reconciliador.
-9. Manter o Dockerfile do processor somente no ambiente local; preparar futuramente seu source
-   deployment com runtime `java25`, Functions Framework e entry point
-   `com.example.photoprocessor.processamento.PhotoProcessorFunction`, validando antes o formato do
-   source bundle Maven.
+9. Manter o Dockerfile do processor somente no ambiente local. Gerar seu source bundle com
+   `backend/scripts/package-photo-processor-source.sh`, preservando runtime `java25`, Functions
+   Framework e entry point `com.example.photoprocessor.processamento.PhotoProcessorFunction`.
+   O ZIP contém o POM do processor na raiz, o POM pai em `parent/pom.xml`, Maven Wrapper e apenas
+   `src/main`; será entregue futuramente ao Terraform após validação do build remoto.
 
 ### Contrato de configuração
 
@@ -85,6 +86,8 @@ dry-run.
 2. Construir imagens imutáveis de API e consumer.
 3. Identificar imagens por commit SHA/tag, sem depender apenas de `latest`.
 4. Fazer scan/revisão básica e registrar digests.
+5. Gerar o ZIP reproduzível do processor e registrar seu SHA-256; o build gerenciado da função a
+   partir desse source ainda deve ser validado na GCP antes do primeiro deployment.
 
 ## 6. Artifact Registry
 
