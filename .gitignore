@@ -11,3 +11,16 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Terraform: diretórios e artefatos locais/derivados
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+*.tfplan
+backend.hcl
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+!*.tfvars.json.example

@@ -1,0 +1,3 @@
+# Copie para backend.hcl e substitua PROJECT_ID antes do primeiro terraform init.
+# backend.hcl é configuração local e não deve ser versionado.
+bucket = "<PROJECT_ID>-tfstate"
