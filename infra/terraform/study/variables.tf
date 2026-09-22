@@ -33,3 +33,13 @@ variable "consumer_image" {
     error_message = "consumer_image deve ser informada e não pode utilizar a tag :latest."
   }
 }
+
+variable "function_source_zip" {
+  description = "Caminho local do ZIP reproduzível do photo-processor, gerado antes do Terraform."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.function_source_zip)) > 0
+    error_message = "function_source_zip deve apontar para o ZIP previamente gerado do photo-processor."
+  }
+}

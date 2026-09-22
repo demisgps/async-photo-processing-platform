@@ -9,6 +9,8 @@ locals {
   database_name               = "photo_platform"
   database_user               = "photo"
   db_password_secret_id       = "${local.name_prefix}-db-password"
+  photo_processor_source_sha  = filesha256(var.function_source_zip)
+  photo_processor_source_name = "photo-processor/${local.photo_processor_source_sha}/photo-processor-source.zip"
 
   common_labels = {
     environment = local.environment

@@ -62,3 +62,23 @@ output "photo_consumer_uri" {
   description = "URI autenticada do Cloud Run Service photo-consumer."
   value       = google_cloud_run_v2_service.photo_consumer.uri
 }
+
+output "photo_processor_function_name" {
+  description = "Nome da Cloud Run Function photo-processor."
+  value       = google_cloudfunctions2_function.photo_processor.name
+}
+
+output "photo_processor_uri" {
+  description = "URI autenticada do serviço subjacente da photo-processor."
+  value       = google_cloudfunctions2_function.photo_processor.service_config[0].uri
+}
+
+output "photo_processor_source_object" {
+  description = "Objeto imutável contendo o source bundle do photo-processor."
+  value       = google_storage_bucket_object.photo_processor_source.name
+}
+
+output "photo_processor_source_sha256" {
+  description = "SHA-256 do source bundle usado pela Function."
+  value       = local.photo_processor_source_sha
+}

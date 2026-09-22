@@ -113,3 +113,23 @@ resource "google_pubsub_topic_iam_member" "photo_processor_result_publisher" {
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.application["photo_processor"].email}"
 }
+
+resource "google_storage_bucket_iam_member" "photo_processor_builder_source_viewer" {
+  bucket = google_storage_bucket.function_source.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.application["photo_processor_builder"].email}"
+}
+
+resource "google_artifact_registry_repository_iam_member" "photo_processor_builder_writer" {
+  project    = var.project_id
+  location   = google_artifact_registry_repository.application.location
+  repository = google_artifact_registry_repository.application.repository_id
+  role       = "roles/artifactregistry.writer"
+  member     = "serviceAccount:${google_service_account.application["photo_processor_builder"].email}"
+}
+
+resource "google_project_iam_member" "photo_processor_builder_log_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.application["photo_processor_builder"].email}"
+}
