@@ -1,0 +1,3 @@
+# Copie para backend.hcl e substitua PROJECT_ID antes de inicializar o backend.
+# backend.hcl é configuração local e não deve ser versionado.
+bucket = "<PROJECT_ID>-tfstate"
