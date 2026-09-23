@@ -63,13 +63,15 @@ ser introduzido apenas para aumentar quantidade de testes.
 4. Modelar APIs, service accounts, IAM, Artifact Registry, buckets, Pub/Sub/Eventarc, Cloud SQL,
    secrets, Cloud Run e Function.
 5. Revisar `terraform plan`, custos e IAM antes de qualquer apply.
+6. Seguir `first-apply-checklist.md`: bootstrap do state, APIs/service agents, budget separado,
+   fundação, checkpoint operacional e somente então full plan/apply.
 
 Console fica reservado para aprendizado, inspeção e troubleshooting; `gcloud`, para diagnóstico e
 operações pontuais reproduzíveis.
 
 ## 4. Provisionamento base
 
-1. Configurar projeto, billing e budget com alertas antecipados.
+1. Criar o budget tradicional separado, com alertas antecipados e gasto bruto, antes do Cloud SQL.
 2. Habilitar somente APIs necessárias.
 3. Criar service accounts e IAM de menor privilégio.
 4. Criar Artifact Registry e Secret Manager.
@@ -77,8 +79,8 @@ operações pontuais reproduzíveis.
 6. Criar Cloud SQL MySQL 8.4 single-zone e o usuário/schema da aplicação.
 7. Criar tópico, subscriptions Push, DLT e subscription DLT.
 
-Não habilitar ainda a função destrutiva de proteção de billing; primeiro validar alertas em
-dry-run.
+Budget não é hard cap. Não habilitar função destrutiva de proteção de billing; Spend Cap Preview
+também não será usado porque não cobre Cloud SQL e não elimina a principal exposição contínua.
 
 ## 5. Build das imagens
 

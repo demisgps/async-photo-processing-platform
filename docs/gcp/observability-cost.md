@@ -64,6 +64,10 @@ Nunca registrar bytes de imagem, credenciais, tokens ou secrets.
 - ausência inesperada de processamento concluído em conjunto com backlog;
 - consumo de budget nos percentuais definidos.
 
+Dashboard e alert policies de métricas da aplicação serão modelados somente depois do primeiro
+deployment funcional. Os sinais nativos e logs estruturados serão usados para obter baseline antes
+de definir thresholds de CPU, memória, 5xx, latência, backlog ou Cloud SQL.
+
 Sem reconciliador, detecção e tratamento de processamentos ativos não recuperados são
 operacionais. Uma consulta/log baseado em idade pode auxiliar o diagnóstico, mas não deve alterar o
 estado automaticamente.
@@ -91,9 +95,22 @@ armazenamento mínimo e compatibilidade do tier com MySQL 8.4 em `us-central1`.
 Valores, quotas e Free Tier mudam. Todos os números devem ser confirmados na documentação e na
 calculadora da GCP imediatamente antes do apply.
 
-## Budget e desligamento de emergência
+## Budget inicial
 
-Fluxo planejado, ainda não implementado:
+O budget tradicional fica em um root Terraform separado, com state em `billing/state`, e deve ser
+criado antes do primeiro provisionamento do Cloud SQL. Ele acompanha o gasto bruto mensal do projeto
+(`EXCLUDE_ALL_CREDITS`) e notifica os destinatários IAM padrão em 50%, 80%, 90% e 100%.
+
+Budget é alerta, não hard cap: contabilização e notificações podem atrasar e não interrompem recursos.
+O valor é fornecido operacionalmente e nunca hardcoded no repositório.
+
+Spend Cap Budget permanece fora desta fase. O recurso está em Preview, limita-se a serviços
+elegíveis e não cobre Cloud SQL atualmente; portanto não protege a principal exposição contínua de
+custo deste projeto.
+
+## Desligamento de emergência futuro
+
+Fluxo apenas estudado, ainda não implementado:
 
 ```mermaid
 flowchart LR
@@ -128,4 +145,3 @@ ambiente, ampliando o risco de perda do banco ao usar esse mecanismo.
 - [Budgets e notificações programáticas](https://docs.cloud.google.com/billing/docs/how-to/budgets)
 - [Desabilitar billing por notificações](https://docs.cloud.google.com/billing/docs/how-to/disable-billing-with-notifications)
 - [Impacto de desabilitar billing](https://docs.cloud.google.com/billing/docs/how-to/modify-project)
-

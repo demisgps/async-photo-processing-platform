@@ -1,0 +1,3 @@
+# Copie para backend.hcl e substitua PROJECT_ID depois que o bootstrap criar o bucket.
+# backend.hcl é configuração local e não deve ser versionado.
+bucket = "<PROJECT_ID>-tfstate"
