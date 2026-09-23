@@ -11,6 +11,10 @@ resource "google_storage_bucket" "terraform_state" {
     enabled = true
   }
 
+  soft_delete_policy {
+    retention_duration_seconds = 604800
+  }
+
   labels = {
     environment = "study"
     managed_by  = "terraform-bootstrap"
