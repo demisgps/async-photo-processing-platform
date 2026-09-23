@@ -82,3 +82,23 @@ output "photo_processor_source_sha256" {
   description = "SHA-256 do source bundle usado pela Function."
   value       = local.photo_processor_source_sha
 }
+
+output "photo_consumer_subscription_name" {
+  description = "Subscription Push principal do photo-consumer."
+  value       = google_pubsub_subscription.photo_consumer.name
+}
+
+output "photo_consumer_dlt_subscription_name" {
+  description = "Subscription Push do Dead Letter Topic do photo-consumer."
+  value       = google_pubsub_subscription.photo_consumer_dlt.name
+}
+
+output "dead_letter_topic_name" {
+  description = "Tópico de dead letter usado pela subscription principal."
+  value       = google_pubsub_topic.photo_processed_dlt.name
+}
+
+output "photo_processor_eventarc_trigger" {
+  description = "Nome do trigger Eventarc integrado à Cloud Run Function."
+  value       = google_cloudfunctions2_function.photo_processor.event_trigger[0].trigger
+}

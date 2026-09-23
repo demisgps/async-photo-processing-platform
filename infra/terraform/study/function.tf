@@ -44,11 +44,26 @@ resource "google_cloudfunctions2_function" "photo_processor" {
     }
   }
 
+  event_trigger {
+    trigger_region        = var.region
+    event_type            = "google.cloud.storage.object.v1.finalized"
+    retry_policy          = "RETRY_POLICY_RETRY"
+    service_account_email = google_service_account.application["eventarc_trigger"].email
+
+    event_filters {
+      attribute = "bucket"
+      value     = google_storage_bucket.original.name
+    }
+  }
+
   depends_on = [
     google_project_service.required["cloudbuild.googleapis.com"],
     google_project_service.required["cloudfunctions.googleapis.com"],
     google_project_service.required["run.googleapis.com"],
     google_artifact_registry_repository_iam_member.photo_processor_builder_writer,
+    google_project_iam_member.eventarc_trigger_event_receiver,
+    google_project_iam_member.eventarc_trigger_run_invoker,
+    google_project_iam_member.storage_service_agent_pubsub_publisher,
     google_project_iam_member.photo_processor_builder_log_writer,
     google_storage_bucket_iam_member.photo_processor_builder_source_viewer,
   ]

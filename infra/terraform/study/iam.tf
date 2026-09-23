@@ -38,6 +38,16 @@ locals {
   }
 }
 
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
+data "google_storage_project_service_account" "current" {
+  project = var.project_id
+
+  depends_on = [google_project_service.required["storage.googleapis.com"]]
+}
+
 resource "google_service_account" "application" {
   for_each = local.service_accounts
 
@@ -132,4 +142,50 @@ resource "google_project_iam_member" "photo_processor_builder_log_writer" {
   project = var.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.application["photo_processor_builder"].email}"
+}
+
+resource "google_project_iam_member" "eventarc_trigger_event_receiver" {
+  project = var.project_id
+  role    = "roles/eventarc.eventReceiver"
+  member  = "serviceAccount:${google_service_account.application["eventarc_trigger"].email}"
+}
+
+# O trigger integrado precisa da permissão antes da criação da Function. Como o
+# serviço Cloud Run subjacente ainda não existe nesse ponto, o escopo suportado
+# sem dependência circular é o projeto.
+resource "google_project_iam_member" "eventarc_trigger_run_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.application["eventarc_trigger"].email}"
+}
+
+# O Eventarc cria e administra o tópico de transporte do evento direto; por isso
+# o publisher do service agent do Storage segue o escopo de projeto documentado.
+resource "google_project_iam_member" "storage_service_agent_pubsub_publisher" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+  member  = data.google_storage_project_service_account.current.member
+}
+
+locals {
+  pubsub_service_agent_email  = "service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  pubsub_service_agent_member = "serviceAccount:${local.pubsub_service_agent_email}"
+}
+
+resource "google_pubsub_topic_iam_member" "pubsub_service_agent_dlt_publisher" {
+  project = var.project_id
+  topic   = google_pubsub_topic.photo_processed_dlt.name
+  role    = "roles/pubsub.publisher"
+  member  = local.pubsub_service_agent_member
+
+  depends_on = [google_project_service.required["pubsub.googleapis.com"]]
+}
+
+resource "google_pubsub_subscription_iam_member" "pubsub_service_agent_main_subscriber" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.photo_consumer.name
+  role         = "roles/pubsub.subscriber"
+  member       = local.pubsub_service_agent_member
+
+  depends_on = [google_project_service.required["pubsub.googleapis.com"]]
 }
