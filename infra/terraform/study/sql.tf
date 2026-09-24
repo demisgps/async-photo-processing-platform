@@ -15,6 +15,7 @@ resource "google_sql_database_instance" "main" {
     deletion_protection_enabled = true
 
     disk_size       = 10
+    disk_type       = "PD_SSD"
     disk_autoresize = false
 
     backup_configuration {
