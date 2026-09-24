@@ -93,10 +93,17 @@ terraform apply billing.tfplan
 Confirmar budget mensal de R$ 150 (BRL), escopo de um projeto, gasto bruto, thresholds 50/80/90/100
 e destinatários IAM padrão. Budget não interrompe consumo e não garante limite máximo de cobrança.
 
-## 6. Provisionar a fundação
+## 6. Provisionar a fundação em duas etapas
 
-O primeiro apply parcial do root `study` deve criar somente a fundação. Usar os mesmos placeholders
-efêmeros da etapa de APIs e direcionar exatamente estes recursos:
+Cloud SQL é o principal recurso desta arquitetura com custo contínuo enquanto permanece
+provisionado. Por isso, a fundação é separada em dois plans/applies revisados de forma independente.
+
+### Fundação 1 — recursos básicos sem Cloud SQL
+
+O primeiro apply parcial do root `study` cria somente identidades, Artifact Registry, os três
+buckets, o container do secret, os tópicos Pub/Sub e o IAM básico que independe dos workloads e do
+Cloud SQL. Usar os mesmos placeholders efêmeros da etapa de APIs e direcionar exatamente estes
+recursos:
 
 ```text
 google_service_account.application
@@ -107,10 +114,6 @@ google_storage_bucket.function_source
 google_secret_manager_secret.db_password
 google_pubsub_topic.photo_processed
 google_pubsub_topic.photo_processed_dlt
-google_sql_database_instance.main
-google_sql_database.application
-google_project_iam_member.photo_api_cloud_sql_client
-google_project_iam_member.photo_consumer_cloud_sql_client
 google_storage_bucket_iam_member.photo_api_original_object_admin
 google_storage_bucket_iam_member.photo_api_processed_object_admin
 google_storage_bucket_iam_member.photo_consumer_processed_object_viewer
@@ -122,17 +125,35 @@ google_pubsub_topic_iam_member.photo_processor_result_publisher
 google_storage_bucket_iam_member.photo_processor_builder_source_viewer
 google_artifact_registry_repository_iam_member.photo_processor_builder_writer
 google_project_iam_member.photo_processor_builder_log_writer
-google_project_iam_member.eventarc_trigger_event_receiver
-google_project_iam_member.eventarc_trigger_run_invoker
-google_project_iam_member.storage_service_agent_pubsub_publisher
-google_pubsub_topic_iam_member.pubsub_service_agent_dlt_publisher
 ```
 
 Construir o comando `terraform plan` com um `-target=<endereço>` para cada endereço acima, revisar
-que nenhum workload, subscription ou trigger entrou no plano e só então aplicar o plan salvo.
-Dependências referenciadas podem ser incluídas automaticamente e também devem ser revisadas.
+que nenhum Cloud SQL, workload, subscription ou trigger entrou no plano e só então aplicar o plan
+salvo. Dependências referenciadas podem ser incluídas automaticamente e também devem ser revisadas.
 
-Esse state parcial não representa o estado final desejado. Não executar operações rotineiras com
+Os buckets têm responsabilidades intencionalmente separadas:
+
+1. `original`: recebe a imagem original enviada pela API e será a origem do Eventarc;
+2. `processed`: recebe a imagem processada/redimensionada pela `photo-processor`;
+3. `function_source`: armazena exclusivamente o ZIP/source usado no build e deployment da função.
+
+Artefatos de build da Function não devem ser misturados com os buckets funcionais de fotos.
+
+### Fundação 2 — Cloud SQL isolado
+
+Gerar e revisar separadamente o plan contendo somente:
+
+```text
+google_sql_database_instance.main
+google_sql_database.application
+google_project_iam_member.photo_api_cloud_sql_client
+google_project_iam_member.photo_consumer_cloud_sql_client
+```
+
+Antes do apply, revisar isoladamente configuração, compatibilidade e impacto de custo do Cloud SQL.
+Não criar `google_sql_user`: usuário e senha permanecem no checkpoint operacional fora do Terraform.
+
+Os states parciais não representam o estado final desejado. Não executar operações rotineiras com
 `-target`; após os checkpoints seguintes, um full plan é obrigatório.
 
 ## 7. Checkpoint operacional

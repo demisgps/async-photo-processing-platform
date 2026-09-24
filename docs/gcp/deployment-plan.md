@@ -74,11 +74,14 @@ operações pontuais reproduzíveis.
 1. Criar o budget tradicional separado de R$ 150 mensais (BRL), com alertas antecipados e gasto
    bruto, antes do Cloud SQL.
 2. Habilitar somente APIs necessárias.
-3. Criar service accounts e IAM de menor privilégio.
-4. Criar Artifact Registry e Secret Manager.
-5. Criar os dois buckets em `us-central1`, sem versioning e com lifecycle de 3 dias.
-6. Criar Cloud SQL MySQL 8.4 single-zone e o usuário/schema da aplicação.
-7. Criar tópico, subscriptions Push, DLT e subscription DLT.
+3. Executar a Fundação 1 sem Cloud SQL: service accounts, IAM básico, Artifact Registry, Secret
+   Manager, tópicos Pub/Sub e três buckets em `us-central1`.
+4. Manter separados o bucket original, origem futura do Eventarc; o bucket processed, destino das
+   imagens redimensionadas; e o bucket function-source, exclusivo para ZIP/source de build.
+5. Revisar e executar a Fundação 2 separadamente: Cloud SQL MySQL 8.4 single-zone, database e IAM
+   Cloud SQL relacionado, após avaliação isolada de configuração e custo contínuo.
+6. Criar o usuário/senha do banco pelo checkpoint operacional fora do Terraform.
+7. Criar subscriptions Push, DLT e subscription DLT junto dos workloads/eventos posteriores.
 
 Budget não é hard cap. Não habilitar função destrutiva de proteção de billing; Spend Cap Preview
 também não será usado porque não cobre Cloud SQL e não elimina a principal exposição contínua.
