@@ -18,12 +18,12 @@ variable "billing_account_id" {
   }
 }
 
-variable "budget_amount_usd" {
-  description = "Valor mensal do budget em dólares americanos."
+variable "budget_amount" {
+  description = "Valor mensal do budget na moeda da Billing Account."
   type        = number
 
   validation {
-    condition     = var.budget_amount_usd > 0
-    error_message = "budget_amount_usd deve ser maior que zero."
+    condition     = var.budget_amount > 0
+    error_message = "budget_amount deve ser maior que zero."
   }
 }

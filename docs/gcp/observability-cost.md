@@ -98,11 +98,12 @@ calculadora da GCP imediatamente antes do apply.
 ## Budget inicial
 
 O budget tradicional fica em um root Terraform separado, com state em `billing/state`, e deve ser
-criado antes do primeiro provisionamento do Cloud SQL. Ele acompanha o gasto bruto mensal do projeto
-(`EXCLUDE_ALL_CREDITS`) e notifica os destinatários IAM padrão em 50%, 80%, 90% e 100%.
+criado antes do primeiro provisionamento do Cloud SQL. O valor aprovado é R$ 150 mensais (BRL). Ele
+acompanha o gasto bruto do projeto (`EXCLUDE_ALL_CREDITS`) e notifica os destinatários IAM padrão em
+50%, 80%, 90% e 100%.
 
 Budget é alerta, não hard cap: contabilização e notificações podem atrasar e não interrompem recursos.
-O valor é fornecido operacionalmente e nunca hardcoded no repositório.
+O valor continua sendo fornecido operacionalmente pela variável `budget_amount`, sem default.
 
 Spend Cap Budget permanece fora desta fase. O recurso está em Preview, limita-se a serviços
 elegíveis e não cobre Cloud SQL atualmente; portanto não protege a principal exposição contínua de

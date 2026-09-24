@@ -71,7 +71,8 @@ operações pontuais reproduzíveis.
 
 ## 4. Provisionamento base
 
-1. Criar o budget tradicional separado, com alertas antecipados e gasto bruto, antes do Cloud SQL.
+1. Criar o budget tradicional separado de R$ 150 mensais (BRL), com alertas antecipados e gasto
+   bruto, antes do Cloud SQL.
 2. Habilitar somente APIs necessárias.
 3. Criar service accounts e IAM de menor privilégio.
 4. Criar Artifact Registry e Secret Manager.

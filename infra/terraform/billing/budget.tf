@@ -3,8 +3,8 @@ data "google_project" "study" {
 }
 
 locals {
-  budget_base_units    = floor(var.budget_amount_usd)
-  budget_rounded_nanos = floor(((var.budget_amount_usd - local.budget_base_units) * 1000000000) + 0.5)
+  budget_base_units    = floor(var.budget_amount)
+  budget_rounded_nanos = floor(((var.budget_amount - local.budget_base_units) * 1000000000) + 0.5)
   budget_units         = local.budget_base_units + floor(local.budget_rounded_nanos / 1000000000)
   budget_nanos         = local.budget_rounded_nanos % 1000000000
 }
@@ -21,7 +21,7 @@ resource "google_billing_budget" "study" {
 
   amount {
     specified_amount {
-      currency_code = "USD"
+      currency_code = "BRL"
       units         = local.budget_units
       nanos         = local.budget_nanos
     }

@@ -84,14 +84,14 @@ terraform init -backend-config=backend.hcl
 terraform plan \
   -var='project_id=<PROJECT_ID>' \
   -var='billing_account_id=<BILLING_ACCOUNT_ID>' \
-  -var='budget_amount_usd=<AMOUNT>' \
+  -var='budget_amount=<AMOUNT_BRL>' \
   -out=billing.tfplan
 # revisar integralmente
 terraform apply billing.tfplan
 ```
 
-Confirmar budget mensal, escopo de um projeto, gasto bruto, thresholds 50/80/90/100 e destinatários
-IAM padrão. Budget não interrompe consumo e não garante limite máximo de cobrança.
+Confirmar budget mensal de R$ 150 (BRL), escopo de um projeto, gasto bruto, thresholds 50/80/90/100
+e destinatários IAM padrão. Budget não interrompe consumo e não garante limite máximo de cobrança.
 
 ## 6. Provisionar a fundação
 
